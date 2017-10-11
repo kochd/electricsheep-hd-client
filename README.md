@@ -17,8 +17,9 @@ Join us on [#electricsheephd @ freenode.net](http://webchat.freenode.net/?random
 ### Debian / Ubuntu / ...
 <pre>
 git clone https://github.com/kochd/electricsheep-hd-client.git && cd electricsheep-hd-client
-apt-get install flam3 ruby bundler
-bundle install
+apt-get install flam3 ruby
+sudo gem install 
+bundle install bundler
 ./daemon
 </pre>
 
