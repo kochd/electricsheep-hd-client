@@ -19,8 +19,7 @@ season = File.basename(frame_dir)
 Dir.chdir(frame_dir)
 
 @parts = []
-Dir.foreach(".").select{|x| x.start_with?("electricsheep.") &&
-                        x.end_with?(".webm")}.sort.each do |seq|
+Dir.glob("electricsheep*.webm").sort.each do |seq|
   seq1 = seq.split("_")[0]
   seq2 = seq.split("_")[1].sub(/\.webm$/,"")
   if seq1 == seq2
