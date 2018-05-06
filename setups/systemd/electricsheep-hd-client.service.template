@@ -1,0 +1,10 @@
+[Unit]
+Description=Renders sheeps in HD
+
+[Service]
+ExecStart=$DAEMON_PATH
+User=$USER
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,24 @@
+#!/usr/bin/env ruby
+fail "Run this with sudo" unless ENV['SUDO_USER']
+require 'logger'
+LOGGER = Logger.new(STDOUT)
+p File.dirname(__FILE__) + "/../../daemon"
+DAEMON_PATH = File.absolute_path(File.dirname(__FILE__) + "/../../daemon")
+USER = ENV['SUDO_USER']
+
+LOGGER.info "Adding system user '#{USER}'"
+`adduser electricsheephd --system --no-create-home`
+
+template = File.read(File.dirname(__FILE__) + "/electricsheep-hd-client.service.template")
+template.gsub!("$DAEMON_PATH", DAEMON_PATH)
+template.gsub!("$USER", USER)
+
+LOGGER.info "Creating service: /etc/systemd/system/electricsheep-hd-client.service"
+File.open("/etc/systemd/system/electricsheep-hd-client.service", "w") { |f| f.write template }
+LOGGER.info "Reload services"
+`systemctl daemon-reload`
+LOGGER.info "Enable service"
+`systemctl enable electricsheep-hd-client.service`
+LOGGER.info "Starting service"
+`systemctl start electricsheep-hd-client.service`
+LOGGER.info "COMPLETE"
