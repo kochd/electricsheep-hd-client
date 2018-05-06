@@ -116,8 +116,7 @@ def render_frame(genome_file, frame)
   else
     `nice -#{NICE} flam3-animate`
   end
-  leeding_zeros = "0" * ( 5 - frame.to_s.length)
-  "#{@frame_dir}/#{concat_name}/#{leeding_zeros}#{frame}.jpg"
+  "#{@frame_dir}/#{concat_name}/#{"%05d" % frame.to_s}.jpg"
 end
 
 def upload_frame(frame_file, work_set)
@@ -163,6 +162,7 @@ loop do
 
   @branch = @season["name"]
   puts "Active season: #{@branch}"
+  File.open("#{@basedir}/.active-season", "w") { |f| f.write @season["name"]}
   @branch_dir = "#{@basedir}/branches/#{@branch}"
   @genome_dir = "#{@branch_dir}/genomes"
   @animated_genome_dir = "#{@branch_dir}/animated_genomes"
