@@ -55,4 +55,7 @@ Just run
 ./play
 </pre>
 
-This should read your earned movies of the current season and then play them using mpv (https://mpv.io). mpv is also available as apt package. 
+This should read your earned movies of the current season and then play them using mpv (https://mpv.io). mpv is also available as apt package.
+
+## Setups
+Take a look at the README's in [setups](https://github.com/kochd/electricsheep-hd-client/tree/master/setups)
