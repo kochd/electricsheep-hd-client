@@ -9,7 +9,7 @@ For a good example of what electric sheeps are see [this youtube vid](https://ww
 
 ## Roadmap
 - System is fully operational but in an alpha state. So expect [bugs](https://github.com/kochd/electricsheep-hd-client/issues).
-- Currently there is no frontend where you can you can see the overall rendering process by the community.
+- ~~Currently there is no frontend where you can you can see the overall rendering process by the community.~~
 - GPU rendering with CUDA is planned but this need more investigation
 
 ## IRC
