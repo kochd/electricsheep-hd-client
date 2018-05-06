@@ -2,7 +2,6 @@
 fail "Run this with sudo" unless ENV['SUDO_USER']
 require 'logger'
 LOGGER = Logger.new(STDOUT)
-p File.dirname(__FILE__) + "/../../daemon"
 DAEMON_PATH = File.absolute_path(File.dirname(__FILE__) + "/../../daemon")
 USER = ENV['SUDO_USER']
 

@@ -1,0 +1,21 @@
+#!/usr/bin/env ruby
+fail "Run this with sudo" unless ENV['SUDO_USER']
+require 'logger'
+LOGGER = Logger.new(STDOUT)
+PLAY_PATH = File.absolute_path(File.dirname(__FILE__) + "/../../play")
+fail "Pass your homedirectory as ARGV[0] (sudo ./install ~)" unless ARGV[0]
+XSCREENSAVER_CONFIG = File.absolute_path(ARGV[0] + "/.xscreensaver")
+fail "Failed to find '.xscreensaver' config in #{ARGV[0]}" unless File.exist?(XSCREENSAVER_CONFIG)
+XSCREENSAVER_SCRIPT = "/usr/lib/xscreensaver/eshd"
+
+template = File.read(File.dirname(__FILE__) + "/eshd.template")
+template.gsub!("$PLAY_PATH", PLAY_PATH)
+LOGGER.info("Creating eshd screensaver #{XSCREENSAVER_SCRIPT}")
+File.open(XSCREENSAVER_SCRIPT, "w") { |f| f.write template }
+LOGGER.info("Chmod eshd screensaver #{XSCREENSAVER_SCRIPT}")
+File.chmod(0755, XSCREENSAVER_SCRIPT)
+LOGGER.info("Adding Electric Sheep HD to #{XSCREENSAVER_CONFIG}")
+unless File.read(XSCREENSAVER_CONFIG).include?("Electric Sheep HD")
+  patch = File.read(XSCREENSAVER_CONFIG).sub(/\\n\\$/,"\\n\\\n\"Electric Sheep HD\" eshd -root \\n\\")
+  File.open(XSCREENSAVER_CONFIG, "w") { |f| f.write patch   }
+end
