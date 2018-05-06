@@ -8,11 +8,13 @@ FIFO = "/tmp/eshd"
 INPUTCONF = File.absolute_path(File.dirname(__FILE__) + "/mpv-input.conf")
 File.delete(FIFO) if File.exist?(FIFO)
 system "mkfifo #{FIFO}"
-mpv_args = %W(--input-conf=#{INPUTCONF} --no-input-default-bindings --no-osc -fs --panscan=1 --input-file=#{FIFO} --idle)
-ARGV[1] ||= ENV['XSCREENSAVER_WINDOW']
-mpv_args << "--wid #{ARGV[1]}" if ARGV[1]
+mpv_args = %W(--input-conf=#{INPUTCONF} --no-input-default-bindings --no-stop-screensaver --no-osc -fs --panscan=1 --input-file=#{FIFO} --idle)
+mpv_args << "--wid #{ENV['XSCREENSAVER_WINDOW']}" if ENV['XSCREENSAVER_WINDOW']
 
 mpv = Thread.new { Thread.current.abort_on_exception=true; system "nice -19 mpv #{mpv_args.join(" ")}" }
+Signal.trap("SIGTERM") { Thread.kill(mpv)}
+Signal.trap("SIGINT") { Thread.kill(mpv)}
+                                                                               
 ARGV[0] ||= "branches/" + File.read(File.dirname(__FILE__) + "/.active-season") + "/movies/"
 frame_dir = ARGV[0]
 season = File.basename(frame_dir)
