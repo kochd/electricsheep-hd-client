@@ -14,7 +14,10 @@ sudo ./install /home/another_user/
 It installs a 'eshd' script in /usr/lib/xscreensaver/eshd containing
 <pre>
 #!/bin/bash
-/home/foo/electricsheep-hd-client/play
+/home/foo/electricsheep-hd-client/play &
+child="$!"
+trap 'kill -TERM "$child"' TERM
+wait "$child"
 </pre>
 
 And adds the script to the .xscreensaver config in the homedirectory of the user
