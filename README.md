@@ -47,4 +47,12 @@ Usage: daemon [OPTIONS]
         --nice NICENESS              Niceness (Higher values result in lower process priority (default: 19, max: 19))
 </pre>
 
-Once your daemon is rendering frames you will gain so called credits for every frame you have rendered. Your daemon will then start to "buy" completed sequences using your gained credits and download them to `$BASE_DIR/branches/$CURRENT_BRANCH/movies`. Currently you will only get short sequences of 5 seconds which you need to concat yourself if you want a full blown movie. 
+Once your daemon is rendering frames you will gain so called credits for every frame you have rendered. Your daemon will then start to "buy" completed sequences using your gained credits and download them to `$BASE_DIR/branches/$CURRENT_BRANCH/movies`. Currently you will only get short sequences of 5 seconds which can be played by the play script.
+
+## Play
+Just run
+<pre>
+./play
+</pre>
+
+This should read your earned movies of the current season and then play them using mpv (https://mpv.io). mpv is also available as apt package. 
