@@ -6,3 +6,4 @@ api.key
 Gemfile.lock
 movies
 branches
+.active-season
