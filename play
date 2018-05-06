@@ -49,7 +49,7 @@ begin
     @parts.rotate(OFFSET).each do |p|
       puts "write " + p
       File.open(FIFO, "ab") { |f| f.write "loadfile #{Dir.pwd}/#{p} append-play\n" }
-      sleep 5
+      sleep 4.9
     end
   end
 ensure
