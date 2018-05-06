@@ -1,5 +1,5 @@
 #!/bin/bash
 $PLAY_PATH &
 child="$!"
-trap 'echo "SIGTERM IN BASH" >>/tmp/eshd.log && kill -TERM "$child"' TERM
+trap 'kill -TERM "$child"' TERM
 wait "$child"
