@@ -8,12 +8,15 @@ FIFO = "/tmp/eshd"
 INPUTCONF = File.absolute_path(File.dirname(__FILE__) + "/mpv-input.conf")
 File.delete(FIFO) if File.exist?(FIFO)
 system "mkfifo #{FIFO}"
-mpv_args = %W(--input-conf=#{INPUTCONF} --no-input-default-bindings --no-stop-screensaver --no-osc -fs --panscan=1 --input-file=#{FIFO} --idle)
+mpv_args = %W(--input-conf=#{INPUTCONF} --no-input-default-bindings --no-stop-screensaver --no-osc -fs --panscan=1 --input-file=#{FIFO} --idle --quiet)
 mpv_args << "--wid #{ENV['XSCREENSAVER_WINDOW']}" if ENV['XSCREENSAVER_WINDOW']
 
-mpv = Thread.new { Thread.current.abort_on_exception=true; system "nice -19 mpv #{mpv_args.join(" ")}" }
-Signal.trap("SIGTERM") { Thread.kill(mpv)}
-Signal.trap("SIGINT") { Thread.kill(mpv)}
+mpv = Thread.new do
+  Thread.current.abort_on_exception=true
+  @pid = Process.spawn("nice -19 mpv #{mpv_args.join(" ")}")
+  Process.wait(@pid)
+end
+Signal.trap("SIGTERM") { puts "SIGTERM" ; Process.kill("KILL", @pid) ; Thread.kill(mpv) ; exit }
                                                                                
 ARGV[0] ||= "branches/" + File.read(File.dirname(__FILE__) + "/.active-season") + "/movies/"
 frame_dir = ARGV[0]
@@ -49,12 +52,13 @@ end
 begin
   loop do
     @parts.rotate(OFFSET).each do |p|
-      puts "write " + p
+      puts "append " + p
       File.open(FIFO, "ab") { |f| f.write "loadfile #{Dir.pwd}/#{p} append-play\n" }
       sleep 4.9
     end
   end
 ensure
+  Process.kill("KILL", @pid)
   mpv.kill
   File.delete(FIFO) if File.exist?(FIFO)
 end
