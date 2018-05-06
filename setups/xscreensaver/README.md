@@ -1,3 +1,4 @@
+![screenshot01](https://raw.githubusercontent.com/kochd/electricsheep-hd-client/master/setups/xscreensaver/screenshot01.png)
 Installs a xscreenserver compatible screenserver that executes 'play'
 
 # How to install
