@@ -5,11 +5,11 @@
 
 Originaly designed by http://www.electricsheep.org/ but rendered at low resolutions i am trying to bring the sheeps to the next generation of computer displays.
 This is the early alpha of a client for an electric sheep ecosystem which renders frames in HD ( e.g. 720p, 1080p, 4k, 8k).
-For a good example of what electric sheeps are see [this youtube vid](https://www.youtube.com/watch?v=vo8IC8sMXwQ)
+For a good example of what electric sheeps are see [this youtube video](https://www.youtube.com/watch?v=KeNORUW4OGs)
 
 ## Roadmap
 - System is fully operational but in an alpha state. So expect [bugs](https://github.com/kochd/electricsheep-hd-client/issues).
-- ~~Currently there is no frontend where you can you can see the overall rendering process by the community.~~
+- ~~Currently there is no frontend where you can see the overall rendering process by the community.~~
 - GPU rendering with CUDA is planned but this need more investigation
 
 ## IRC
