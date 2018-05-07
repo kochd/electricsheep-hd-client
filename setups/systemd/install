@@ -5,9 +5,6 @@ LOGGER = Logger.new(STDOUT)
 DAEMON_PATH = File.absolute_path(File.dirname(__FILE__) + "/../../daemon")
 USER = ENV['SUDO_USER']
 
-LOGGER.info "Adding system user '#{USER}'"
-`adduser electricsheephd --system --no-create-home`
-
 template = File.read(File.dirname(__FILE__) + "/electricsheep-hd-client.service.template")
 template.gsub!("$DAEMON_PATH", DAEMON_PATH)
 template.gsub!("$USER", USER)
