@@ -4,20 +4,9 @@
 
 `which mpv` ; raise "Install mpv (https://mpv.io/) to use this script" if $? != 0
 require 'socket'
-FIFO = "/tmp/eshd"
-INPUTCONF = File.absolute_path(File.dirname(__FILE__) + "/mpv-input.conf")
-File.delete(FIFO) if File.exist?(FIFO)
-system "mkfifo #{FIFO}"
-mpv_args = %W(--input-conf=#{INPUTCONF} --no-input-default-bindings --no-stop-screensaver --no-osc -fs --panscan=1 --input-file=#{FIFO} --idle --quiet)
-mpv_args << "--wid #{ENV['XSCREENSAVER_WINDOW']}" if ENV['XSCREENSAVER_WINDOW']
+PLAYLIST = "/tmp/eshd.m3u"
+INPUTCONF = File.absolute_path(File.dirname(__FILE__)) + "/mpv-input.conf"
 
-mpv = Thread.new do
-  Thread.current.abort_on_exception=true
-  @pid = Process.spawn("nice -19 mpv #{mpv_args.join(" ")}")
-  Process.wait(@pid)
-end
-Signal.trap("SIGTERM") { puts "SIGTERM" ; Process.kill("KILL", @pid) ; Thread.kill(mpv) ; exit }
-                                                                               
 ARGV[0] ||= "branches/" + File.read(File.dirname(__FILE__) + "/.active-season") + "/movies/"
 frame_dir = ARGV[0]
 season = File.basename(frame_dir)
@@ -27,18 +16,37 @@ Dir.chdir(frame_dir)
 Dir.glob("electricsheep*.webm").sort.each do |seq|
   seq1 = seq.split("_")[0]
   seq2 = seq.split("_")[1].sub(/\.webm$/,"")
+  seq = File.absolute_path(seq)
   if seq1 == seq2
     3.times { @parts << seq}
   else
     @parts << seq
   end
 end
+
 puts "Got #{@parts.count} parts"
+OFFSET = rand(0..(@parts.count))
+
 if @parts.count < 1
   fail "No enough completed parts - start the daemon to render some frames"
 end
+File.open(PLAYLIST, "w") { |f| f.write @parts.rotate(OFFSET).join("\n") }
 
-OFFSET = rand(0..(@parts.count))
+mpv_args = %W(--input-conf=#{INPUTCONF} --loop-playlist=inf --no-input-default-bindings --no-stop-screensaver --no-osc -fs --panscan=1 --idle --quiet #{PLAYLIST})
+mpv_args << "--wid #{ENV['XSCREENSAVER_WINDOW']}" if ENV['XSCREENSAVER_WINDOW']
+
+mpv = Thread.new do
+  begin
+    Thread.current.abort_on_exception=true
+    @pid = Process.spawn("nice -19 mpv #{mpv_args.join(" ")}")
+    Process.wait(@pid)
+  ensure
+    Process.kill("KILL", @pid)
+    Thread.current.kill
+  end
+end
+
+Signal.trap("SIGTERM") { puts "SIGTERM" ; Process.kill("KILL", @pid) ; Thread.kill(mpv) ; exit }
 
 Thread.new do
   loop do
@@ -48,17 +56,4 @@ Thread.new do
     end
   end
 end
-
-begin
-  loop do
-    @parts.rotate(OFFSET).each do |p|
-      puts "append " + p
-      File.open(FIFO, "ab") { |f| f.write "loadfile #{Dir.pwd}/#{p} append-play\n" }
-      sleep 4.9
-    end
-  end
-ensure
-  Process.kill("KILL", @pid)
-  mpv.kill
-  File.delete(FIFO) if File.exist?(FIFO)
-end
+mpv.join
