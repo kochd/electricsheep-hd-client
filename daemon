@@ -59,7 +59,7 @@ end
 if !ENV["electricsheep-hd-client-updated"]
   ENV["electricsheep-hd-client-updated"] = "true"
   Dir.chdir(@basedir)
-  `git pull origin master`
+  `git pull origin master` unless Gem.win_platform?
   if !ENV["OCRA"]
     exec("ruby #{__FILE__} #{@argv.join(' ')}")
   else
