@@ -114,7 +114,7 @@ def render_frame(genome_file, frame)
   ENV["begin"] = frame.to_s
   ENV["end"] = frame.to_s
   if Gem.win_platform?
-    `flam3-animate`
+    `start /low /b flam3-animate`
   else
     `nice -#{NICE} flam3-animate`
   end
