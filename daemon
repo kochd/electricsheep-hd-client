@@ -16,6 +16,7 @@ OptionParser.new do |opts|
   opts.on("--nice NICENESS",
           "Niceness (Higher values result in lower process priority (default: 19, max: 19))") {|v| @options["nice"] = v}
   opts.on("--experimental-gpu", "Use experimental GPU renderer (Fractorium)") {|v| @options["gpu"] = true}
+  opts.on("--insecure", "Ignore ssl certificate") {|v| @options["insecure"] = true}
 end.parse!
 
 unless Gem.win_platform?
@@ -40,6 +41,7 @@ raise "You need an api key. Please register at #{@options["server"]}/register" i
 $DEBUG = @options["debug"]
 NICE=@options["nice"]
 @options["gpu"] ||= false
+@options["insecure"] ||= false
 
 class HTTPHalt < StandardError; end
 class API
@@ -51,6 +53,7 @@ class API
     @http.use_ssl = true
     @http.ca_file = "#{File.dirname(__FILE__)}/sheeps.crt"
     @http.verify_mode = OpenSSL::SSL::VERIFY_PEER
+    @http.verify_mode = OpenSSL::SSL::VERIFY_NONE if OPTIONS["insecure"]
     @http.verify_depth = 5
     @http.read_timeout = 600
   end
