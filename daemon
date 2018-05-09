@@ -15,6 +15,7 @@ OptionParser.new do |opts|
   opts.on("--no-download", "Do not download movies") {|v| @options["no-download"] = true}
   opts.on("--nice NICENESS",
           "Niceness (Higher values result in lower process priority (default: 19, max: 19))") {|v| @options["nice"] = v}
+  opts.on("--experimental-gpu", "Use experimental GPU renderer (Fractorium)") {|v| @options["gpu"] = true}
 end.parse!
 
 unless Gem.win_platform?
@@ -33,6 +34,7 @@ raise "You need an api key. Please register at #{@options["server"]}/register" i
 @options["nice"] ||= "19"
 $DEBUG = @options["debug"]
 NICE=@options["nice"]
+@options["gpu"] ||= false
 
 class HTTPHalt < StandardError; end
 class API
@@ -80,7 +82,11 @@ def request_work
       download_animated_genome(w['sequence'])
     end
     puts "Rendering... #{w['sequence']} Frame #{w['frame']}"
-    frame = render_frame(genome_file, w["frame"])
+    if @options["gpu"]
+      frame = ember_render_frame(genome_file, w["frame"])
+    else
+      frame = flam3_render_frame(genome_file, w["frame"])
+    end
     puts "Uploading... #{w['sequence']} Frame #{w['frame']}"
     upload_frame(frame, w)
   end
@@ -100,7 +106,33 @@ def download_animated_genome(gid)
   output_file
 end
 
-def render_frame(genome_file, frame)
+def ember_render_frame(genome_file, frame)
+  genome = {}
+  genome["file"] = Pathname.new(genome_file.to_s)
+  genome["id"] = genome["file"].basename.sub(/\.flame$/,"")
+
+  concat_name = "#{genome['id']}"
+  Dir.mkdir("#{@frame_dir}/#{concat_name}") unless File.exist?("#{@frame_dir}/#{concat_name}")
+  if Gem.win_platform?
+    emberanimate = "#{ENV["APPDATA"]}/Fractorium/emberanimate"
+  else
+    emberanimate = "emberanimate"
+  end
+  system(emberanimate,
+	"--in=#{File.expand_path(genome_file)}",
+	"--format=jpg",
+	"--opencl", # TODO Control with flag
+	"--sp",
+	"--prefix=../frames/#{concat_name}/",
+	"--supersample=2",
+	"--frame=#{(frame - 1).to_s}",
+	"--isaac_seed=fractorium")
+	# TODO Control priority with niceness option
+
+  "#{@frame_dir}/#{concat_name}/#{"%03d" % frame.to_s}.jpg"
+end
+
+def flam3_render_frame(genome_file, frame)
   genome = {}
   genome["file"] = Pathname.new(genome_file.to_s)
   genome["id"] = genome["file"].basename.sub(/\.flame$/,"")
@@ -128,7 +160,8 @@ def upload_frame(frame_file, work_set)
                                          "file" => UploadIO.new(jpg, "image/jpeg", "image.jpg"),
                                          "apikey" => @options["apikey"],
                                          "work_set" => work_set.to_json,
-                                         "branch" => @branch)
+                                         "branch" => @branch,
+                                         "gpu" => @options["gpu"])
     response = @api.http.request(req)
     raise HTTPHalt, "Error in upload: #{response.body}" if response.code != "200"
   end
@@ -151,7 +184,7 @@ end
 loop do
   sleep 1
   begin
-    response = @api.get("api/active_season?apikey=#{@options["apikey"]}")
+    response = @api.get("api/active_season?apikey=#{@options["apikey"]}&gpu=#{@options["gpu"]}")
     raise HTTPHalt, "Error in season: #{response.body}" if response.code != "200"
     @season = JSON.parse(response.body)
   rescue JSON::ParserError, Errno::ECONNREFUSED, Errno::ECONNRESET,
