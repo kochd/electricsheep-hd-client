@@ -132,6 +132,8 @@ def ember_render_frame(genome_file, frame)
           "--supersample=2",
           "--frame=#{(frame - 1).to_s}",
           "--isaac_seed=fractorium")
+  result = $? # TODO Does it always return 0 ?
+  fail "Emberrender exited: #{result.exitstatus}" unless result.success?
   # TODO Control priority with niceness option
 
 
