@@ -53,7 +53,7 @@ class API
     @http.use_ssl = true
     @http.ca_file = "#{File.dirname(__FILE__)}/sheeps.crt"
     @http.verify_mode = OpenSSL::SSL::VERIFY_PEER
-    @http.verify_mode = OpenSSL::SSL::VERIFY_NONE if OPTIONS["insecure"]
+    @http.verify_mode = OpenSSL::SSL::VERIFY_NONE if options["insecure"]
     @http.verify_depth = 5
     @http.read_timeout = 600
   end
@@ -78,7 +78,7 @@ if !ENV["electricsheep-hd-client-updated"]
   exit
 end
 
-@api = API.new({server: @options["server"]})
+@api = API.new({server: @options["server"], insecure: @options["insecure"] })
 
 def request_work
   response = @api.get("api/request_work?apikey=#{@options["apikey"]}&gpu=#{@options["gpu"]}")
