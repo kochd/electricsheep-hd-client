@@ -184,7 +184,7 @@ end
 loop do
   sleep 1
   begin
-    response = @api.get("api/active_season?apikey=#{@options["apikey"]}")
+    response = @api.get("api/active_season?apikey=#{@options["apikey"]}&gpu=#{@options["gpu"]}")
     raise HTTPHalt, "Error in season: #{response.body}" if response.code != "200"
     @season = JSON.parse(response.body)
   rescue JSON::ParserError, Errno::ECONNREFUSED, Errno::ECONNRESET,
