@@ -119,14 +119,11 @@ def ember_render_frame(genome_file, frame)
   concat_name = "#{genome['id']}"
   Dir.mkdir("#{@frame_dir}/#{concat_name}") unless File.exist?("#{@frame_dir}/#{concat_name}")
   if Gem.win_platform?
-    niceness = "start /low /b"
     emberanimate = "#{ENV["APPDATA"]}/Fractorium/emberanimate"
   else
-    niceness = "nice -#{NICE}"
     emberanimate = "emberanimate"
   end
-  system( niceness,
-          emberanimate,
+  system( emberanimate,
           "--in=#{File.expand_path(genome_file)}",
           "--format=jpg",
           "--opencl", # TODO Control with flag
@@ -135,6 +132,8 @@ def ember_render_frame(genome_file, frame)
           "--supersample=2",
           "--frame=#{(frame - 1).to_s}",
           "--isaac_seed=fractorium")
+  # TODO Control priority with niceness option
+
 
   "#{@frame_dir}/#{concat_name}/#{"%03d" % frame.to_s}.jpg"
 end
