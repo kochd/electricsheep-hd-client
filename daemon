@@ -21,7 +21,12 @@ end.parse!
 unless Gem.win_platform?
   `which flam3-animate` ; raise "Missing flame3-animate. You have to install flam3 first" if $? != 0
   `which git` ; puts "Missing git. Autoupdate wont work. Please install git" if $? != 0
+  `which emberrender`; raise "emberanimate not found" if $? != 0 && @options["gpu"]
+else
+  raise "emberanimate not found in #{ENV["APPDATA"]}/Fractorium" if @options["gpu"] &&
+                                                                    !File.exist?("#{ENV["APPDATA"]}/Fractorium/emberrender")
 end
+
 
 file_abosulte = File.expand_path(__FILE__)
 @basedir = Pathname.new(file_abosulte).dirname
@@ -114,20 +119,22 @@ def ember_render_frame(genome_file, frame)
   concat_name = "#{genome['id']}"
   Dir.mkdir("#{@frame_dir}/#{concat_name}") unless File.exist?("#{@frame_dir}/#{concat_name}")
   if Gem.win_platform?
+    niceness = "start /low /b"
     emberanimate = "#{ENV["APPDATA"]}/Fractorium/emberanimate"
   else
+    niceness = "nice -#{NICE}"
     emberanimate = "emberanimate"
   end
-  system(emberanimate,
-	"--in=#{File.expand_path(genome_file)}",
-	"--format=jpg",
-	"--opencl", # TODO Control with flag
-	"--sp",
-	"--prefix=../frames/#{concat_name}/",
-	"--supersample=2",
-	"--frame=#{(frame - 1).to_s}",
-	"--isaac_seed=fractorium")
-	# TODO Control priority with niceness option
+  system( niceness,
+          emberanimate,
+          "--in=#{File.expand_path(genome_file)}",
+          "--format=jpg",
+          "--opencl", # TODO Control with flag
+          "--sp",
+          "--prefix=../frames/#{concat_name}/",
+          "--supersample=2",
+          "--frame=#{(frame - 1).to_s}",
+          "--isaac_seed=fractorium")
 
   "#{@frame_dir}/#{concat_name}/#{"%03d" % frame.to_s}.jpg"
 end
