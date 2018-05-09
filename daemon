@@ -78,7 +78,7 @@ end
 @api = API.new({server: @options["server"]})
 
 def request_work
-  response = @api.get("api/request_work?apikey=#{@options["apikey"]}")
+  response = @api.get("api/request_work?apikey=#{@options["apikey"]}&gpu=#{@options["gpu"]}")
   work = JSON.parse(response.body)
   work.each do |w|
     genome_file = "#{@animated_genome_dir}/#{w['sequence']}.flame"
@@ -175,7 +175,7 @@ def upload_frame(frame_file, work_set)
 end
 
 def download_sequence
-  response = @api.get("api/request_sequence_list?apikey=#{@options["apikey"]}")
+  response = @api.get("api/request_sequence_list?apikey=#{@options["apikey"]}&gpu=#{@options["gpu"]}")
   if response.code != "200"
     return response.body
   end
@@ -183,7 +183,7 @@ def download_sequence
   wanted = sequences.select{|s| !File.exist?("#{@movie_dir}/#{s}")}.first
   return "Nothing to download" if wanted.nil?
   puts "Downloading #{wanted}..."
-  response = @api.get("api/request_sequence?apikey=#{@options["apikey"]}&seq=#{wanted}")
+  response = @api.get("api/request_sequence?apikey=#{@options["apikey"]}&seq=#{wanted}&gpu=#{@options["gpu"]}")
   File.open("#{@movie_dir}/#{wanted}", "wb") {|f| f.write(response.body)}
   return "OK"
 end
