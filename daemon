@@ -173,6 +173,7 @@ def upload_frame(frame_file, work_set)
                                          "work_set" => work_set.to_json,
                                          "branch" => @branch,
                                          "gpu" => @options["gpu"])
+    @api.http.verify_mode = OpenSSL::SSL::VERIFY_NONE if @options["insecure"]
     response = @api.http.request(req)
     raise HTTPHalt, "Error in upload: #{response.body}" if response.code != "200"
   end
