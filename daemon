@@ -36,19 +36,7 @@ end
 
 file_abosulte = File.expand_path(__FILE__)
 @basedir = Pathname.new(file_abosulte).dirname
-
 @options["server"] ||= "https://sheeps.triple6.org"
-raise "You need an api key. Please register at #{@options["server"]}/register" if @options["apikey"].nil? && !File.exist?("#{@basedir}/api.key")
-@options["apikey"] ||= File.read("#{@basedir}/api.key").strip
-@options["debug"] ||= false
-@options["no-download"] ||= false
-@options["nice"] ||= "19"
-$DEBUG = @options["debug"]
-NICE=@options["nice"]
-@options["gpu"] ||= false
-@options["insecure"] ||= false
-@options["priority"] ||= -2 if Gem.win_platform?
-@options["priority"] ||= 1 if Gem.win_platform?
 
 class HTTPHalt < StandardError; end
 class API
@@ -74,6 +62,37 @@ class API
     response
   end
 end
+
+API_KEY_FILE = "#{@basedir}/api.key"
+
+unless @options["apikey"] || File.exist?(API_KEY_FILE)
+  loop do
+    print "Enter your apikey: "
+    @options["apikey"] = gets.strip
+    next if @options["apikey"].nil? || @options["apikey"].empty?
+    File.open(API_KEY_FILE, "w" ) { |f| f.write @options["apikey"] }
+    api = API.new({server: @options["server"], insecure: @options["insecure"] })
+    response = api.get("api/active_season?apikey=#{@options["apikey"]}")
+    if response.body == "apikey not known"
+      File.delete(API_KEY_FILE)
+      puts response.body
+      next
+    end
+    break
+  end
+end
+
+@options["apikey"] ||= File.read("#{@basedir}/api.key").strip
+@options["debug"] ||= false
+@options["no-download"] ||= false
+@options["nice"] ||= "19"
+$DEBUG = @options["debug"]
+NICE=@options["nice"]
+@options["gpu"] ||= false
+@options["insecure"] ||= false
+@options["priority"] ||= -2 if Gem.win_platform?
+@options["priority"] ||= 1 if Gem.win_platform?
+
 # Autoupdater
 if !ENV["electricsheep-hd-client-updated"]
   ENV["electricsheep-hd-client-updated"] = "true"
