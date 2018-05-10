@@ -17,6 +17,12 @@ OptionParser.new do |opts|
           "Niceness (Higher values result in lower process priority (default: 19, max: 19))") {|v| @options["nice"] = v}
   opts.on("--experimental-gpu", "Use experimental GPU renderer (Fractorium)") {|v| @options["gpu"] = true}
   opts.on("--insecure", "Ignore ssl certificate") {|v| @options["insecure"] = true}
+  
+  if Gem.win_platform?  
+    opts.on("--gpu-priority", "Set GPU render priority (-2: lowest, 2: highest)") {|v| @options["priority"] = v}
+  else
+    opts.on("--gpu-priority", "Set GPU render priority (1: lowest, 99: highest)") {|v| @options["priority"] = v}
+  end 
 end.parse!
 
 unless Gem.win_platform?
@@ -42,6 +48,8 @@ $DEBUG = @options["debug"]
 NICE=@options["nice"]
 @options["gpu"] ||= false
 @options["insecure"] ||= false
+@options["priority"] ||= -2 if Gem.win_platform?
+@options["priority"] ||= 1 if Gem.win_platform?
 
 class HTTPHalt < StandardError; end
 class API
@@ -126,10 +134,11 @@ def ember_render_frame(genome_file, frame)
   else
     emberanimate = "emberanimate"
   end
-  system( emberanimate,
+  system(emberanimate,
           "--in=#{File.expand_path(genome_file)}",
           "--format=jpg",
           "--opencl", # TODO Control with flag
+          "--priority=#{@options["priority"]}",
           "--sp",
           "--prefix=../frames/#{concat_name}/",
           "--supersample=2",
@@ -137,8 +146,6 @@ def ember_render_frame(genome_file, frame)
           "--isaac_seed=fractorium")
   result = $? # TODO Does it always return 0 ?
   fail "Emberrender exited: #{result.exitstatus}" unless result.success?
-  # TODO Control priority with niceness option
-
 
   "#{@frame_dir}/#{concat_name}/#{"%03d" % frame.to_s}.jpg"
 end
