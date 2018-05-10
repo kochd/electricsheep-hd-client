@@ -24,8 +24,8 @@ unless Gem.win_platform?
   `which git` ; puts "Missing git. Autoupdate wont work. Please install git" if $? != 0
   `which emberrender`; raise "emberanimate not found" if $? != 0 && @options["gpu"]
 else
-  raise "emberanimate not found in #{ENV["APPDATA"]}/Fractorium" if @options["gpu"] &&
-                                                                    !File.exist?("#{ENV["APPDATA"]}/Fractorium/emberrender")
+  raise "emberanimate not found in #{ENV["APPDATA"]}\\Fractorium" if @options["gpu"] &&
+                                                                    !File.exist?("#{ENV["APPDATA"]}\\Fractorium\\emberrender.exe")
 end
 
 
