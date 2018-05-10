@@ -8,3 +8,4 @@ movies
 branches
 .active-season
 git+flam3+ruby/
+daemon.lock
