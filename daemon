@@ -32,9 +32,10 @@ OptionParser.new do |opts|
 end.parse!
 @options["apikey"] ? APIKEY_SWITCH_USED = true : APIKEY_SWITCH_USED = false
 
+`which flam3-animate` ; raise "Missing flame3-animate. You have to install flam3 first" if $? != 0
+`which git` ; LOGGER.error "Missing git. Autoupdate wont work. Please install git" if $? != 0
+
 unless Gem.win_platform?
-  `which flam3-animate` ; raise "Missing flame3-animate. You have to install flam3 first" if $? != 0
-  `which git` ; LOGGER.error "Missing git. Autoupdate wont work. Please install git" if $? != 0
   `which emberrender`; raise "emberanimate not found" if $? != 0 && @options["gpu"]
 else
   raise "emberanimate not found in #{ENV["APPDATA"]}\\Fractorium" if @options["gpu"] &&
@@ -94,7 +95,7 @@ def verify_apikey
   response.code == '200'
 end
 
-@options["apikey"] ||= File.read(API_KEY_FILE).strip
+@options["apikey"] ||= File.read(API_KEY_FILE).strip if File.exist?(API_KEY_FILE)
 unless APIKEY_SWITCH_USED || verify_apikey
   renew_apikey
 end
