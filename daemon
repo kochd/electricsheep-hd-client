@@ -17,13 +17,14 @@ end
 OptionParser.new do |opts|
   opts.banner = "Usage: #{File.basename(__FILE__)} [OPTIONS]"
   opts.on("--server SERVER", "Control server to connect to") {|v| @options["server"] = v.to_s}
-  opts.on("--apikey APIKEY", "Your api key") {|v| @options["apikey"] = v}
+  opts.on("--apikey APIKEY", "Your api key - Default: read from ./api.key file") {|v| @options["apikey"] = v}
   opts.on("--debug", "Debug-mode") {|v| @options["debug"] = true}
-  opts.on("--no-download", "Do not download movies") {|v| @options["no-download"] = true}
+  opts.on("--nd", "--no-download", "Do not download movies") {|v| @options["no-download"] = true}
+  opts.on("--np", "--no-progress", "Hide progress and ETA - This will speed up rendering a bit") {|v| @options["no-progress"] = true}
   opts.on("--nice NICENESS",
           "Niceness (Higher values result in lower process priority (default: 19, max: 19))") {|v| @options["nice"] = v}
   opts.on("--experimental-gpu", "Use experimental GPU renderer (Fractorium)") {|v| @options["gpu"] = true}
-  opts.on("--insecure", "Ignore ssl certificate") {|v| @options["insecure"] = true}
+  opts.on("--insecure", "Ignore ssl certificate errors") {|v| @options["insecure"] = true}
   
   if Gem.win_platform?  
     opts.on("--gpu-priority", "Set GPU render priority (-2: lowest, 2: highest)") {|v| @options["priority"] = v}
@@ -199,6 +200,7 @@ def ember_render_frame(genome_file, frame)
           "--opencl", # TODO Control with flag
           "--priority=#{@options["priority"]}",
           "--sp",
+          "#{@options['no-progress'] ? '' : '--progress'}",
           "--prefix=../frames/#{concat_name}/",
           "--supersample=2",
           "--frame=#{(frame - 1).to_s}",
@@ -219,9 +221,10 @@ def flam3_render_frame(genome_file, frame)
   ENV["in"] = File.expand_path(genome_file)
   ENV["prefix"]= "#{@frame_dir}/#{concat_name}/"
   ENV["format"] = "jpg"
-  ENV["jpeg"] = 95.to_s
+  ENV["jpeg"] = "95"
   ENV["begin"] = frame.to_s
   ENV["end"] = frame.to_s
+  @options["no-progress"] ? ENV["verbose"] = "0" : ENV["verbose"] = "1"
   if Gem.win_platform?
     `start /low /b flam3-animate`
   else
