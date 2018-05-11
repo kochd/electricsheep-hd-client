@@ -38,7 +38,11 @@ mpv_args << "--wid #{ENV['XSCREENSAVER_WINDOW']}" if ENV['XSCREENSAVER_WINDOW']
 mpv = Thread.new do
   begin
     Thread.current.abort_on_exception=true
-    @pid = Process.spawn("nice -19 mpv #{mpv_args.join(" ")}")
+    if Gem.win_platform?
+      @pid = Process.spawn("start /b /min mpv #{mpv_args.join(" ")}")
+    else
+      @pid = Process.spawn("nice -19 mpv #{mpv_args.join(" ")}")
+    end
     Process.wait(@pid)
   ensure
     Process.kill("KILL", @pid)
