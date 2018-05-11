@@ -94,11 +94,11 @@ def verify_apikey
   response.code == '200'
 end
 
-unless @options["apikey"] || File.exist?(API_KEY_FILE)
+@options["apikey"] ||= File.read(API_KEY_FILE).strip
+unless APIKEY_SWITCH_USED || verify_apikey
   renew_apikey
 end
 
-@options["apikey"] ||= File.read(API_KEY_FILE).strip
 @options["debug"] ||= false
 @options["no-download"] ||= false
 @options["nice"] ||= "19"
