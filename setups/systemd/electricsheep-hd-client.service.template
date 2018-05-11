@@ -2,7 +2,7 @@
 Description=Renders sheeps in HD
 
 [Service]
-ExecStart=$DAEMON_PATH
+ExecStart=$DAEMON_PATH --np
 User=$USER
 Restart=on-abort
 
