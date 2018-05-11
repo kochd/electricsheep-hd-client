@@ -106,8 +106,7 @@ $DEBUG = @options["debug"]
 NICE=@options["nice"]
 @options["gpu"] ||= false
 @options["insecure"] ||= false
-@options["priority"] ||= -2 if Gem.win_platform?
-@options["priority"] ||= 1 if Gem.win_platform?
+Gem.win_platform? ? @options["priority"] ||= -2 : @options["priority"] ||= 1
 
 # Autoupdater
 if !ENV["electricsheep-hd-client-updated"]
