@@ -2,6 +2,8 @@
 %w(fileutils tempfile pathname optparse uri net/http net/https
 net/http/post/multipart openssl zlib json logger).each{|g| require g}
 
+Signal.trap("INT") { exit }
+
 LOGGER = Logger.new(STDOUT)
 LOGGER.formatter = proc do |severity, datetime, progname, msg|
   "[#{datetime.strftime("%H:%M:%S")}] #{severity}: #{msg}\n"
