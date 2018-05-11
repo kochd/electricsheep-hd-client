@@ -29,6 +29,7 @@ OptionParser.new do |opts|
     opts.on("--gpu-priority", "Set GPU render priority (1: lowest, 99: highest)") {|v| @options["priority"] = v}
   end 
 end.parse!
+@options["apikey"] ? APIKEY_SWITCH_USED = true : APIKEY_SWITCH_USED = false
 
 unless Gem.win_platform?
   `which flam3-animate` ; raise "Missing flame3-animate. You have to install flam3 first" if $? != 0
@@ -64,27 +65,36 @@ class API
     uri = @uri + url
     request = Net::HTTP::Get.new(uri.request_uri)
     response = @http.request(request)
+    LOGGER.warn "Server response #{response.code}: #{response.body}" if response.code != '200'
     response
   end
 end
 
 API_KEY_FILE = "#{@basedir}/api.key"
 
-unless @options["apikey"] || File.exist?(API_KEY_FILE)
+def renew_apikey
+  return if APIKEY_SWITCH_USED
   loop do
     print "Enter your apikey: "
     @options["apikey"] = gets.strip
     next if @options["apikey"].nil? || @options["apikey"].empty?
-    api = API.new({server: @options["server"], insecure: @options["insecure"] })
-    response = api.get("api/active_season?apikey=#{@options["apikey"]}")
-    if response.body == "apikey not known"
-      File.delete(API_KEY_FILE)
-      LOGGER.error response.body
+    if !verify_apikey
+      File.delete(API_KEY_FILE) if File.exist?(API_KEY_FILE)
       next
     end
     File.open(API_KEY_FILE, "w" ) { |f| f.write @options["apikey"] }
     break
   end
+end
+
+def verify_apikey
+  api = API.new({server: @options["server"], insecure: @options["insecure"] })
+  response = api.get("api/verify?apikey=#{@options["apikey"]}")
+  response.code == '200'
+end
+
+unless @options["apikey"] || File.exist?(API_KEY_FILE)
+  renew_apikey
 end
 
 @options["apikey"] ||= File.read(API_KEY_FILE).strip
