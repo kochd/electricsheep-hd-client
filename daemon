@@ -1,6 +1,11 @@
 #!/usr/bin/env ruby
 %w(fileutils tempfile pathname optparse uri net/http net/https
-net/http/post/multipart openssl zlib json).each{|g| require g}
+net/http/post/multipart openssl zlib json logger).each{|g| require g}
+
+LOGGER = Logger.new(STDOUT)
+LOGGER.formatter = proc do |severity, datetime, progname, msg|
+  "[#{datetime.strftime("%H:%M:%S")}] #{severity}: #{msg}\n"
+end
 
 if Gem.win_platform?
   ENV["PATH"] += ";#{File.expand_path("./git+flam3+ruby/bin")}" if File.exist?("./git+flam3+ruby/bin")
@@ -27,7 +32,7 @@ end.parse!
 
 unless Gem.win_platform?
   `which flam3-animate` ; raise "Missing flame3-animate. You have to install flam3 first" if $? != 0
-  `which git` ; puts "Missing git. Autoupdate wont work. Please install git" if $? != 0
+  `which git` ; LOGGER.error "Missing git. Autoupdate wont work. Please install git" if $? != 0
   `which emberrender`; raise "emberanimate not found" if $? != 0 && @options["gpu"]
 else
   raise "emberanimate not found in #{ENV["APPDATA"]}\\Fractorium" if @options["gpu"] &&
@@ -74,7 +79,7 @@ unless @options["apikey"] || File.exist?(API_KEY_FILE)
     response = api.get("api/active_season?apikey=#{@options["apikey"]}")
     if response.body == "apikey not known"
       File.delete(API_KEY_FILE)
-      puts response.body
+      LOGGER.error response.body
       next
     end
     File.open(API_KEY_FILE, "w" ) { |f| f.write @options["apikey"] }
@@ -111,7 +116,7 @@ if File.exist?(LOCKFILE)
   pid = File.read(LOCKFILE).strip.to_i
   if pid == 0
     File.delete(LOCKFILE)
-    puts "Broken pid file - start again"
+    LOGGER.error "Broken pid file - start again"
     exit 1
   end
 
@@ -136,16 +141,16 @@ def request_work
   work.each do |w|
     genome_file = "#{@animated_genome_dir}/#{w['sequence']}.flame"
     unless File.exist?(genome_file)
-      puts "Downloading #{w['sequence']} ..."
+      LOGGER.info "Downloading #{w['sequence']} ..."
       download_animated_genome(w['sequence'])
     end
-    puts "Rendering... #{w['sequence']} Frame #{w['frame']}"
+    LOGGER.info "Rendering... #{w['sequence']} Frame #{w['frame']}"
     if @options["gpu"]
       frame = ember_render_frame(genome_file, w["frame"])
     else
       frame = flam3_render_frame(genome_file, w["frame"])
     end
-    puts "Uploading... #{w['sequence']} Frame #{w['frame']}"
+    LOGGER.info "Uploading... #{w['sequence']} Frame #{w['frame']}"
     upload_frame(frame, w)
   end
 end
@@ -236,7 +241,7 @@ def download_sequence
   sequences = JSON.parse(response.body)
   wanted = sequences.select{|s| !File.exist?("#{@movie_dir}/#{s}")}.first
   return "Nothing to download" if wanted.nil?
-  puts "Downloading #{wanted}..."
+  LOGGER.info "Downloading #{wanted}..."
   response = @api.get("api/request_sequence?apikey=#{@options["apikey"]}&seq=#{wanted}&gpu=#{@options["gpu"]}")
   File.open("#{@movie_dir}/#{wanted}", "wb") {|f| f.write(response.body)}
   return "OK"
@@ -251,13 +256,13 @@ loop do
   rescue JSON::ParserError, Errno::ECONNREFUSED, Errno::ECONNRESET,
          SocketError, Errno::ETIMEDOUT, HTTPHalt, Net::ReadTimeout,
          Net::OpenTimeout => e
-    puts "Error: #{e}"
+    LOGGER.error "#{e}"
     sleep 60
     next
   end
 
   @branch = @season["name"]
-  puts "Active season: #{@branch}"
+  LOGGER.info "Active season: #{@branch}"
   File.open("#{@basedir}/.active-season", "w") { |f| f.write @season["name"]}
   @branch_dir = "#{@basedir}/branches/#{@branch}"
   @genome_dir = "#{@branch_dir}/genomes"
@@ -272,16 +277,16 @@ loop do
 
   begin
     unless @options["no-download"]
-      puts "Requesting new sequence ..."
-      puts download_sequence
+      LOGGER.info "Requesting new sequence ..."
+      LOGGER.info download_sequence
     end
-    puts "Requesting new work..."
+    LOGGER.info "Requesting new work..."
     request_work
     break if ENV["OCRA"]
   rescue JSON::ParserError, Errno::ECONNREFUSED, Errno::ECONNRESET,
          SocketError, Errno::ETIMEDOUT, HTTPHalt, Net::ReadTimeout,
          Net::OpenTimeout => e
-    puts "Error: #{e}"
+    LOGGER.error "#{e}"
     sleep 60
     next
   end
