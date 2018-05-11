@@ -82,7 +82,7 @@ unless @options["apikey"] || File.exist?(API_KEY_FILE)
   end
 end
 
-@options["apikey"] ||= File.read("#{@basedir}/api.key").strip
+@options["apikey"] ||= File.read(API_KEY_FILE).strip
 @options["debug"] ||= false
 @options["no-download"] ||= false
 @options["nice"] ||= "19"
