@@ -18,19 +18,17 @@ OptionParser.new do |opts|
   opts.banner = "Usage: #{File.basename(__FILE__)} [OPTIONS]"
   opts.on("--server SERVER", "Control server to connect to") {|v| @options["server"] = v.to_s}
   opts.on("--apikey APIKEY", "Your api key - Default: read from ./api.key file") {|v| @options["apikey"] = v}
-  opts.on("--debug", "Debug-mode") {|v| @options["debug"] = true}
   opts.on("--nd", "--no-download", "Do not download movies") {|v| @options["no-download"] = true}
   opts.on("--np", "--no-progress", "Hide progress and ETA - This will speed up rendering a bit") {|v| @options["no-progress"] = true}
-  opts.on("--nice NICENESS",
-          "Niceness (Higher values result in lower process priority (default: 19, max: 19))") {|v| @options["nice"] = v}
+  opts.on("--nice NICENESS", "Niceness (Higher values result in lower process priority (default: 19, max: 19))") {|v| @options["nice"] = v}
   opts.on("--experimental-gpu", "Use experimental GPU renderer (Fractorium)") {|v| @options["gpu"] = true}
-  opts.on("--insecure", "Ignore ssl certificate errors") {|v| @options["insecure"] = true}
-  
   if Gem.win_platform?  
     opts.on("--gpu-priority", "Set GPU render priority (-2: lowest, 2: highest)") {|v| @options["priority"] = v}
   else
     opts.on("--gpu-priority", "Set GPU render priority (1: lowest, 99: highest)") {|v| @options["priority"] = v}
   end 
+  opts.on("--insecure", "Ignore ssl certificate errors") {|v| @options["insecure"] = true}
+  opts.on("--debug", "Debug-mode") {|v| @options["debug"] = true}
 end.parse!
 @options["apikey"] ? APIKEY_SWITCH_USED = true : APIKEY_SWITCH_USED = false
 
