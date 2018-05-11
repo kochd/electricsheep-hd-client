@@ -70,7 +70,6 @@ unless @options["apikey"] || File.exist?(API_KEY_FILE)
     print "Enter your apikey: "
     @options["apikey"] = gets.strip
     next if @options["apikey"].nil? || @options["apikey"].empty?
-    File.open(API_KEY_FILE, "w" ) { |f| f.write @options["apikey"] }
     api = API.new({server: @options["server"], insecure: @options["insecure"] })
     response = api.get("api/active_season?apikey=#{@options["apikey"]}")
     if response.body == "apikey not known"
@@ -78,6 +77,7 @@ unless @options["apikey"] || File.exist?(API_KEY_FILE)
       puts response.body
       next
     end
+    File.open(API_KEY_FILE, "w" ) { |f| f.write @options["apikey"] }
     break
   end
 end
