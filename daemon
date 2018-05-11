@@ -95,7 +95,7 @@ def verify_apikey
   response.code == '200'
 end
 
-@options["apikey"] ||= File.read(API_KEY_FILE).strip
+@options["apikey"] ||= File.read(API_KEY_FILE).strip if File.exist?(API_KEY_FILE)
 unless APIKEY_SWITCH_USED || verify_apikey
   renew_apikey
 end
