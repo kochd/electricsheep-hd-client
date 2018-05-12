@@ -3,6 +3,7 @@ anim_template.flame
 api.key
 \#*\#
 *~
+.\#*
 Gemfile.lock
 movies
 branches
