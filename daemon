@@ -9,9 +9,6 @@ LOGGER.formatter = proc do |severity, datetime, progname, msg|
   "[#{datetime.strftime("%H:%M:%S")}] #{severity}: #{msg}\n"
 end
 
-if Gem.win_platform?
-  ENV["PATH"] += ";#{File.expand_path("./git+flam3+ruby/bin")}" if File.exist?("./git+flam3+ruby/bin")
-end
 @argv = ARGV.dup
 @options={}
 OptionParser.new do |opts|
@@ -33,9 +30,9 @@ end.parse!
 @options["apikey"] ? APIKEY_SWITCH_USED = true : APIKEY_SWITCH_USED = false
 
 `which flam3-animate` ; raise "Missing flame3-animate. You have to install flam3 first" if $? != 0
-`which git` ; LOGGER.error "Missing git. Autoupdate wont work. Please install git" if $? != 0
 
 unless Gem.win_platform?
+  `which git` ; LOGGER.error "Missing git. Autoupdate wont work. Please install git" if $? != 0
   `which emberrender`; raise "emberanimate not found" if $? != 0 && @options["gpu"]
 else
   raise "emberanimate not found in #{ENV["APPDATA"]}\\Fractorium" if @options["gpu"] &&
