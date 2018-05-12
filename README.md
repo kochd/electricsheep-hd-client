@@ -29,7 +29,7 @@ If this results in `./daemon.rb:29:in <main>': You will need an api key. Please 
 Currently i dont know. Adept from [Debian / Ubuntu](https://github.com/kochd/electricsheep-hd-client/blob/master/README.md#debian--ubuntu--) and contribute back so others can learn from your wisdom.
 
 ### Windows
-Download an install the [latest relase](https://github.com/kochd/electricsheep-hd-client/releases) and follow the steps for your registration to get your apikey.
+Download an install the [latest release](https://github.com/kochd/electricsheep-hd-client/releases) and follow the steps for your registration to get your apikey.
 
 If you want the latest development version Install using the installer and replace every existing file in the installation folder with the content of the [latest master](https://github.com/kochd/electricsheep-hd-client/archive/master.zip).
 
