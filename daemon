@@ -4,6 +4,8 @@ net/http/post/multipart openssl zlib json logger digest/sha2).each{|g| require g
 
 Signal.trap("INT") { exit }
 
+BASEDIR = File.absolute_path(File.dirname(__FILE__))
+API_KEY_FILE = "#{BASEDIR}/api.key"
 LOGGER = Logger.new(STDOUT)
 LOGGER.formatter = proc do |severity, datetime, progname, msg|
   "[#{datetime.strftime("%H:%M:%S")}] #{severity}: #{msg}\n"
@@ -39,9 +41,46 @@ else
                                                                     !File.exist?("#{ENV["APPDATA"]}\\Fractorium\\emberrender.exe")
 end
 
-file_abosulte = File.expand_path(__FILE__)
-@basedir = Pathname.new(file_abosulte).dirname
 @options["server"] ||= "https://sheeps.triple6.org"
+
+# Autoupdater
+if !ENV["electricsheep-hd-client-updated"]
+  ENV["electricsheep-hd-client-updated"] = "true"
+  Dir.chdir(BASEDIR)
+  `git pull origin master` unless Gem.win_platform?
+  if !ENV["OCRA"]
+    exec("ruby #{__FILE__} #{@argv.join(' ')}")
+  else
+    exec("ocra #{__FILE__} #{@argv.join(' ')}")
+  end
+  exit
+end
+
+# Process lock
+unless Gem.win_platform?
+  LOCKFILE = "daemon.lock"
+  if File.exist?(LOCKFILE)
+    pid = File.read(LOCKFILE).strip.to_i
+    if pid == 0
+      File.delete(LOCKFILE)
+      LOGGER.error "Broken pid file - start again"
+      exit 1
+    end
+
+    # Check if pid is still running
+    begin
+      Process.kill(0, pid)
+      # Locked
+      raise "daemon is already running as pid: #{pid}"
+    rescue Errno::ESRCH
+      # Not locked
+      File.open(LOCKFILE, "w") { |f| f.write Process.pid }
+    end
+  else
+    File.open(LOCKFILE, "w") { |f| f.write Process.pid }
+  end
+end
+
 
 class HTTPHalt < StandardError; end
 class API
@@ -89,85 +128,50 @@ class API
     @fingerprint = pow["fingerprint"]
     @fingerprint
   end
-end
 
-API_KEY_FILE = "#{@basedir}/api.key"
-
-def renew_apikey
-  return if APIKEY_SWITCH_USED
-  loop do
-    print "Enter your apikey: "
-    @options["apikey"] = gets.strip
-    next if @options["apikey"].nil? || @options["apikey"].empty?
-    if !verify_apikey
-      File.delete(API_KEY_FILE) if File.exist?(API_KEY_FILE)
-      next
+  def renew_key
+    return if APIKEY_SWITCH_USED
+    loop do
+      print "Enter your apikey: "
+      @key = gets.strip
+      next if @key.nil? || @key.empty?
+      if !verify_key
+        File.delete(API_KEY_FILE) if File.exist?(API_KEY_FILE)
+        next
+      end
+      File.open(API_KEY_FILE, "w" ) { |f| f.write @key }
+      break
     end
-    File.open(API_KEY_FILE, "w" ) { |f| f.write @options["apikey"] }
-    break
+    return self
+  end
+
+  def verify_key
+    api = API.new({server: @server, insecure: @insecure, key: @key })
+    response = api.get("api/verify?apikey=#{@key}")
+    response.code == '200'
   end
 end
 
-def verify_apikey
-  api = API.new({server: @options["server"], insecure: @options["insecure"], key: @options["apikey"] })
-  response = api.get("api/verify?apikey=#{@options["apikey"]}")
-  response.code == '200'
-end
-
+# Default options:
 @options["apikey"] ||= File.read(API_KEY_FILE).strip if File.exist?(API_KEY_FILE)
-unless APIKEY_SWITCH_USED || verify_apikey
-  renew_apikey
-end
-
 @options["debug"] ||= false
 @options["no-download"] ||= false
 @options["nice"] ||= "19"
 $DEBUG = @options["debug"]
-NICE=@options["nice"]
 @options["gpu"] ||= false
 @options["insecure"] ||= false
 Gem.win_platform? ? @options["priority"] ||= -2 : @options["priority"] ||= 1
 
-# Autoupdater
-if !ENV["electricsheep-hd-client-updated"]
-  ENV["electricsheep-hd-client-updated"] = "true"
-  Dir.chdir(@basedir)
-  `git pull origin master` unless Gem.win_platform?
-  if !ENV["OCRA"]
-    exec("ruby #{__FILE__} #{@argv.join(' ')}")
-  else
-    exec("ocra #{__FILE__} #{@argv.join(' ')}")
-  end
-  exit
-end
-
-unless Gem.win_platform?
-  LOCKFILE = "daemon.lock"
-  if File.exist?(LOCKFILE)
-    pid = File.read(LOCKFILE).strip.to_i
-    if pid == 0
-      File.delete(LOCKFILE)
-      LOGGER.error "Broken pid file - start again"
-      exit 1
-    end
-
-    # Check if pid is still running
-    begin
-      Process.kill(0, pid)
-      # Locked
-      raise "daemon is already running as pid: #{pid}"
-    rescue Errno::ESRCH
-      # Not locked
-      File.open(LOCKFILE, "w") { |f| f.write Process.pid }
-    end
-  else
-    File.open(LOCKFILE, "w") { |f| f.write Process.pid }
-  end
-end
-
+# Initialize API
 @api = API.new({server: @options["server"], key: @options["apikey"], insecure: @options["insecure"] })
+if APIKEY_SWITCH_USED
+  exit unless @api.verify_key
+else
+  @api = @api.renew_key unless @api.verify_key
+end
 @api.pow
 
+# Main functions
 def request_work
   response = @api.get("api/request_work?apikey=#{@api.key}&fingerprint=#{@api.fingerprint}&gpu=#{@options["gpu"]}")
   work = JSON.parse(response.body)
@@ -248,7 +252,7 @@ def flam3_render_frame(genome_file, frame)
   if Gem.win_platform?
     `start /low /b flam3-animate`
   else
-    `nice -#{NICE} flam3-animate`
+    `nice -#{@options["nice"]} flam3-animate`
   end
   "#{@frame_dir}/#{concat_name}/#{"%05d" % frame.to_s}.jpg"
 end
@@ -258,7 +262,7 @@ def upload_frame(frame_file, work_set)
   File.open(frame_file) do |jpg|
     req = Net::HTTP::Post::Multipart.new(url.path,
                                          "file" => UploadIO.new(jpg, "image/jpeg", "image.jpg"),
-                                         "apikey" => @options["apikey"],
+                                         "apikey" => @api.key,
                                          "fingerprint" => @api.fingerprint,
                                          "work_set" => work_set.to_json,
                                          "branch" => @branch,
@@ -283,6 +287,7 @@ def download_sequence
   return "OK"
 end
 
+# Loop
 loop do
   sleep 1
   begin
@@ -299,13 +304,12 @@ loop do
 
   @branch = @season["name"]
   LOGGER.info "Active season: #{@branch}"
-  File.open("#{@basedir}/.active-season", "w") { |f| f.write @season["name"]}
-  @branch_dir = "#{@basedir}/branches/#{@branch}"
+  File.open("#{BASEDIR}/.active-season", "w") { |f| f.write @season["name"]}
+  @branch_dir = "#{BASEDIR}/branches/#{@branch}"
   @genome_dir = "#{@branch_dir}/genomes"
   @animated_genome_dir = "#{@branch_dir}/animated_genomes"
   @frame_dir = "#{@branch_dir}/frames"
   @movie_dir = "#{@branch_dir}/movies"
-
   FileUtils.mkdir_p(@genome_dir)
   FileUtils.mkdir_p(@animated_genome_dir)
   FileUtils.mkdir_p(@frame_dir)
