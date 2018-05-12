@@ -122,26 +122,28 @@ if !ENV["electricsheep-hd-client-updated"]
   exit
 end
 
-LOCKFILE = "daemon.lock"
-if File.exist?(LOCKFILE)
-  pid = File.read(LOCKFILE).strip.to_i
-  if pid == 0
-    File.delete(LOCKFILE)
-    LOGGER.error "Broken pid file - start again"
-    exit 1
-  end
+unless Gem.win_platform?
+  LOCKFILE = "daemon.lock"
+  if File.exist?(LOCKFILE)
+    pid = File.read(LOCKFILE).strip.to_i
+    if pid == 0
+      File.delete(LOCKFILE)
+      LOGGER.error "Broken pid file - start again"
+      exit 1
+    end
 
-  # Check if pid is still running
-  begin
-    Process.kill(0, pid)
-    # Locked
-    raise "daemon is already running as pid: #{pid}"
-  rescue Errno::ESRCH
-    # Not locked
+    # Check if pid is still running
+    begin
+      Process.kill(0, pid)
+      # Locked
+      raise "daemon is already running as pid: #{pid}"
+    rescue Errno::ESRCH
+      # Not locked
+      File.open(LOCKFILE, "w") { |f| f.write Process.pid }
+    end
+  else
     File.open(LOCKFILE, "w") { |f| f.write Process.pid }
   end
-else
-  File.open(LOCKFILE, "w") { |f| f.write Process.pid }
 end
 
 @api = API.new({server: @options["server"], insecure: @options["insecure"] })
