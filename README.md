@@ -31,7 +31,7 @@ Currently i do not know. Adept from [Debian / Ubuntu](https://github.com/kochd/e
 ### Windows
 Download an install the [latest release](https://github.com/kochd/electricsheep-hd-client/releases/latest) and follow the steps for your registration to get your apikey.
 
-If you want the latest development version Install using the installer and replace every existing file in the installation folder with the content of the [latest master](https://github.com/kochd/electricsheep-hd-client/archive/master.zip). This usually isn't need as we package a new installer whenever this should be the case.
+If you want the latest development version Install using the installer and replace every existing file in the installation folder with the content of the [latest master](https://github.com/kochd/electricsheep-hd-client/archive/master.zip). This usually isn't needed as we package a new installer whenever this should be the case.
 
 
 ## Registration
