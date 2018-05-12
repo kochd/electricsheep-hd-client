@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 %w(fileutils tempfile pathname optparse uri net/http net/https
-net/http/post/multipart openssl zlib json logger).each{|g| require g}
+net/http/post/multipart openssl zlib json logger digest/sha2).each{|g| require g}
 
 Signal.trap("INT") { exit }
 
@@ -46,8 +46,12 @@ file_abosulte = File.expand_path(__FILE__)
 class HTTPHalt < StandardError; end
 class API
   attr_reader :http
+  attr_reader :fingerprint
+  attr_reader :key
+
   def initialize(options={})
     @server = options[:server]
+    @key = options[:key]
     @uri = URI.parse(@server)
     @http = Net::HTTP.new(@uri.host, @uri.port)
     @http.read_timeout = 600
@@ -65,7 +69,23 @@ class API
     request = Net::HTTP::Get.new(uri.request_uri)
     response = @http.request(request)
     LOGGER.warn "Server response #{response.code}: #{response.body}" if response.code != '200'
+    @fingerprint = pow if response.code == '999'
     response
+  end
+
+  def pow
+    start = Time.now
+    LOGGER.info "Solving PoW..."
+    pow = JSON.parse(get("api/fingerprint?apikey=#{@key}").body)
+    sha = ""
+    solution = 0
+    until sha.start_with?(pow["pattern"])
+      solution += 1
+      sha = Digest::SHA2.hexdigest(pow["fingerprint"] + '^' + solution.to_s)
+    end
+    LOGGER.info "Solved after #{(Time.now - start).round} seconds"
+    @fingerprint = pow["fingerprint"]
+    @fingerprint
   end
 end
 
@@ -87,7 +107,7 @@ def renew_apikey
 end
 
 def verify_apikey
-  api = API.new({server: @options["server"], insecure: @options["insecure"] })
+  api = API.new({server: @options["server"], insecure: @options["insecure"], key: @options["apikey"] })
   response = api.get("api/verify?apikey=#{@options["apikey"]}")
   response.code == '200'
 end
@@ -143,10 +163,11 @@ unless Gem.win_platform?
   end
 end
 
-@api = API.new({server: @options["server"], insecure: @options["insecure"] })
+@api = API.new({server: @options["server"], key: @options["apikey"], insecure: @options["insecure"] })
+@api.pow
 
 def request_work
-  response = @api.get("api/request_work?apikey=#{@options["apikey"]}&gpu=#{@options["gpu"]}")
+  response = @api.get("api/request_work?apikey=#{@options["apikey"]}&fingerprint=#{@api.fingerprint}&gpu=#{@options["gpu"]}")
   work = JSON.parse(response.body)
   work.each do |w|
     genome_file = "#{@animated_genome_dir}/#{w['sequence']}.flame"
@@ -236,6 +257,7 @@ def upload_frame(frame_file, work_set)
     req = Net::HTTP::Post::Multipart.new(url.path,
                                          "file" => UploadIO.new(jpg, "image/jpeg", "image.jpg"),
                                          "apikey" => @options["apikey"],
+                                         "fingerprint" => @api.fingerprint,
                                          "work_set" => work_set.to_json,
                                          "branch" => @branch,
                                          "gpu" => @options["gpu"])
@@ -246,7 +268,7 @@ def upload_frame(frame_file, work_set)
 end
 
 def download_sequence
-  response = @api.get("api/request_sequence_list?apikey=#{@options["apikey"]}&gpu=#{@options["gpu"]}")
+  response = @api.get("api/request_sequence_list?apikey=#{@options["apikey"]}&fingerprint=#{@api.fingerprint}&gpu=#{@options["gpu"]}")
   if response.code != "200"
     return response.body
   end
@@ -254,7 +276,7 @@ def download_sequence
   wanted = sequences.select{|s| !File.exist?("#{@movie_dir}/#{s}")}.first
   return "Nothing to download" if wanted.nil?
   LOGGER.info "Downloading #{wanted}..."
-  response = @api.get("api/request_sequence?apikey=#{@options["apikey"]}&seq=#{wanted}&gpu=#{@options["gpu"]}")
+  response = @api.get("api/request_sequence?apikey=#{@options["apikey"]}&fingerprint=#{@api.fingerprint}&seq=#{wanted}&gpu=#{@options["gpu"]}")
   File.open("#{@movie_dir}/#{wanted}", "wb") {|f| f.write(response.body)}
   return "OK"
 end
@@ -262,7 +284,7 @@ end
 loop do
   sleep 1
   begin
-    response = @api.get("api/active_season?apikey=#{@options["apikey"]}&gpu=#{@options["gpu"]}")
+    response = @api.get("api/active_season?apikey=#{@options["apikey"]}&fingerprint=#{@api.fingerprint}&gpu=#{@options["gpu"]}")
     raise HTTPHalt, "Error in season: #{response.body}" if response.code != "200"
     @season = JSON.parse(response.body)
   rescue JSON::ParserError, Errno::ECONNREFUSED, Errno::ECONNRESET,
