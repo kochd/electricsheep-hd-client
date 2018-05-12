@@ -84,6 +84,8 @@ class API
       sha = Digest::SHA2.hexdigest(pow["fingerprint"] + '^' + solution.to_s)
     end
     LOGGER.info "Solved after #{(Time.now - start).round} seconds"
+    response = get("api/pow?apikey=#{@key}&fingerprint=#{pow["fingerprint"]}&pattern=#{pow["pattern"]}&solution=#{solution}")
+    return nil if response.code != '200'
     @fingerprint = pow["fingerprint"]
     @fingerprint
   end
@@ -167,7 +169,7 @@ end
 @api.pow
 
 def request_work
-  response = @api.get("api/request_work?apikey=#{@options["apikey"]}&fingerprint=#{@api.fingerprint}&gpu=#{@options["gpu"]}")
+  response = @api.get("api/request_work?apikey=#{@api.key}&fingerprint=#{@api.fingerprint}&gpu=#{@options["gpu"]}")
   work = JSON.parse(response.body)
   work.each do |w|
     genome_file = "#{@animated_genome_dir}/#{w['sequence']}.flame"
@@ -268,7 +270,7 @@ def upload_frame(frame_file, work_set)
 end
 
 def download_sequence
-  response = @api.get("api/request_sequence_list?apikey=#{@options["apikey"]}&fingerprint=#{@api.fingerprint}&gpu=#{@options["gpu"]}")
+  response = @api.get("api/request_sequence_list?apikey=#{@api.key}&fingerprint=#{@api.fingerprint}&gpu=#{@options["gpu"]}")
   if response.code != "200"
     return response.body
   end
@@ -276,7 +278,7 @@ def download_sequence
   wanted = sequences.select{|s| !File.exist?("#{@movie_dir}/#{s}")}.first
   return "Nothing to download" if wanted.nil?
   LOGGER.info "Downloading #{wanted}..."
-  response = @api.get("api/request_sequence?apikey=#{@options["apikey"]}&fingerprint=#{@api.fingerprint}&seq=#{wanted}&gpu=#{@options["gpu"]}")
+  response = @api.get("api/request_sequence?apikey=#{@api.key}&fingerprint=#{@api.fingerprint}&seq=#{wanted}&gpu=#{@options["gpu"]}")
   File.open("#{@movie_dir}/#{wanted}", "wb") {|f| f.write(response.body)}
   return "OK"
 end
@@ -284,7 +286,7 @@ end
 loop do
   sleep 1
   begin
-    response = @api.get("api/active_season?apikey=#{@options["apikey"]}&fingerprint=#{@api.fingerprint}&gpu=#{@options["gpu"]}")
+    response = @api.get("api/active_season?apikey=#{@api.key}&fingerprint=#{@api.fingerprint}&gpu=#{@options["gpu"]}")
     raise HTTPHalt, "Error in season: #{response.body}" if response.code != "200"
     @season = JSON.parse(response.body)
   rescue JSON::ParserError, Errno::ECONNREFUSED, Errno::ECONNRESET,
