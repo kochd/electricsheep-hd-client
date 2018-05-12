@@ -3,13 +3,13 @@
 [Wikipedia](https://en.wikipedia.org/wiki/Electric_sheep):
 `Electric Sheep is a distributed computing project for animating and evolving fractal flames, which are in turn distributed to the networked computers`
 
-Originaly designed by http://www.electricsheep.org/ but rendered at low resolutions i am trying to bring the sheeps to the next generation of computer displays.
+Originally designed by http://www.electricsheep.org/ but rendered at low resolutions i am trying to bring the sheeps to the next generation of computer displays.
 This is the early alpha of a client for an electric sheep ecosystem which renders frames in HD ( e.g. 720p, 1080p, 4k, 8k).
 For a good example of what electric sheeps are see [this youtube video](https://www.youtube.com/watch?v=KeNORUW4OGs)
 
-## Roadmap
+## Road map
 - System is fully operational but in an alpha state. So expect [bugs](https://github.com/kochd/electricsheep-hd-client/issues).
-- ~~Currently there is no frontend where you can see the overall rendering process by the community.~~
+- ~~Currently there is no front end where you can see the overall rendering process by the community.~~
 - GPU rendering with CUDA is planned but this need more investigation
 
 ## IRC
@@ -26,12 +26,12 @@ bundle install
 If this results in `./daemon.rb:29:in <main>': You will need an api key. Please register at https://sheeps.triple6.org:9999/register (RuntimeError)` continue with [registration](https://github.com/kochd/electricsheep-hd-client#registration).
 
 ### Other Linux / Unix / Posix systems
-Currently i dont know. Adept from [Debian / Ubuntu](https://github.com/kochd/electricsheep-hd-client/blob/master/README.md#debian--ubuntu--) and contribute back so others can learn from your wisdom.
+Currently i do not know. Adept from [Debian / Ubuntu](https://github.com/kochd/electricsheep-hd-client/blob/master/README.md#debian--ubuntu--) and contribute back so others can learn from your wisdom.
 
 ### Windows
 Download an install the [latest release](https://github.com/kochd/electricsheep-hd-client/releases/latest) and follow the steps for your registration to get your apikey.
 
-If you want the latest development version Install using the installer and replace every existing file in the installation folder with the content of the [latest master](https://github.com/kochd/electricsheep-hd-client/archive/master.zip).
+If you want the latest development version Install using the installer and replace every existing file in the installation folder with the content of the [latest master](https://github.com/kochd/electricsheep-hd-client/archive/master.zip). This usually isn't need as we package a new installer whenever this should be the case.
 
 
 ## Registration
