@@ -19,6 +19,7 @@ OptionParser.new do |opts|
   opts.on("--apikey APIKEY", "Your api key - Default: read from ./api.key file") {|v| @options["apikey"] = v}
   opts.on("--nd", "--no-download", "Do not download movies") {|v| @options["no-download"] = true}
   opts.on("--np", "--no-progress", "Hide progress and ETA - This will speed up rendering a bit") {|v| @options["no-progress"] = true}
+  opts.on("-k", "--keep-frames", "Do not delete rendered frames after upload") {|v| @options["keep_frames"] = true}
   opts.on("--nice NICENESS", "Niceness (Higher values result in lower process priority (default: 19, max: 19))") {|v| @options["nice"] = v}
   opts.on("--experimental-gpu", "Use experimental GPU renderer (Fractorium)") {|v| @options["gpu"] = true}
   if Gem.win_platform?  
@@ -160,6 +161,7 @@ end
 $DEBUG = @options["debug"]
 @options["gpu"] ||= false
 @options["insecure"] ||= false
+@options["keep_frames"] ||= false
 Gem.win_platform? ? @options["priority"] ||= -2 : @options["priority"] ||= 1
 
 # Initialize API
@@ -172,7 +174,7 @@ end
 @api.pow
 
 # Main functions
-def request_work
+def request_work(keep_frames: false)
   response = @api.get("api/request_work?apikey=#{@api.key}&fingerprint=#{@api.fingerprint}&gpu=#{@options["gpu"]}")
   work = JSON.parse(response.body)
   work.each do |w|
@@ -189,6 +191,7 @@ def request_work
     end
     LOGGER.info "Uploading... #{w['sequence']} Frame #{w['frame']}"
     upload_frame(frame, w)
+    File.delete(frame) unless keep_frames
   end
 end
 
@@ -321,7 +324,7 @@ loop do
       LOGGER.info download_sequence
     end
     LOGGER.info "Requesting new work..."
-    request_work
+    request_work(keep_frames: @options["keep_frames"])
     break if ENV["OCRA"]
   rescue JSON::ParserError, Errno::ECONNREFUSED, Errno::ECONNRESET,
          SocketError, Errno::ETIMEDOUT, HTTPHalt, Net::ReadTimeout,
