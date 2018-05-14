@@ -7,7 +7,7 @@ require 'socket'
 PLAYLIST = "/tmp/eshd.m3u"
 INPUTCONF = File.absolute_path(File.dirname(__FILE__)) + "/mpv-input.conf"
 
-ARGV[0] ||= "branches/" + File.read(File.dirname(__FILE__) + "/.active-season") + "/movies/"
+ARGV[0] ||= File.dirname(__FILE__) + "/branches/" + File.read(File.dirname(__FILE__) + "/.active-season") + "/movies/"
 frame_dir = ARGV[0]
 season = File.basename(frame_dir)
 Dir.chdir(frame_dir)
@@ -18,7 +18,7 @@ Dir.glob("electricsheep*.webm").sort.each do |seq|
   seq2 = seq.split("_")[1].sub(/\.webm$/,"")
   seq = File.absolute_path(seq)
   if seq1 == seq2
-    3.times { @parts << seq}
+    2.times { @parts << seq}
   else
     @parts << seq
   end
