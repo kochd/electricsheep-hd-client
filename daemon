@@ -22,11 +22,11 @@ OptionParser.new do |opts|
   opts.on("-k", "--keep-frames", "Do not delete rendered frames after upload") {|v| @options["keep_frames"] = true}
   opts.on("--nice NICENESS", "Niceness (Higher values result in lower process priority (default: 19, max: 19))") {|v| @options["nice"] = v}
   opts.on("--experimental-gpu", "Use experimental GPU renderer (Fractorium)") {|v| @options["gpu"] = true}
-  if Gem.win_platform?  
+  if Gem.win_platform?
     opts.on("--gpu-priority", "Set GPU render priority (-2: lowest, 2: highest)") {|v| @options["priority"] = v}
   else
     opts.on("--gpu-priority", "Set GPU render priority (1: lowest, 99: highest)") {|v| @options["priority"] = v}
-  end 
+  end
   opts.on("--insecure", "Ignore ssl certificate errors") {|v| @options["insecure"] = true}
   opts.on("--debug", "Debug-mode") {|v| @options["debug"] = true}
 end.parse!
@@ -109,7 +109,6 @@ class API
     request = Net::HTTP::Get.new(uri.request_uri)
     response = @http.request(request)
     LOGGER.warn "Server response #{response.code}: #{response.body}" if response.code != '200'
-    @fingerprint = pow if response.code == '999'
     response
   end
 
@@ -171,11 +170,10 @@ if APIKEY_SWITCH_USED
 else
   @api = @api.renew_key unless @api.verify_key
 end
-@api.pow
 
 # Main functions
 def request_work(keep_frames: false)
-  response = @api.get("api/request_work?apikey=#{@api.key}&fingerprint=#{@api.fingerprint}&gpu=#{@options["gpu"]}")
+  response = @api.get("api/request_work?apikey=#{@api.key}&fingerprint=#{@api.pow}&gpu=#{@options["gpu"]}")
   work = JSON.parse(response.body)
   work.each do |w|
     genome_file = "#{@animated_genome_dir}/#{w['sequence']}.flame"
@@ -266,7 +264,6 @@ def upload_frame(frame_file, work_set)
     req = Net::HTTP::Post::Multipart.new(url.path,
                                          "file" => UploadIO.new(jpg, "image/jpeg", "image.jpg"),
                                          "apikey" => @api.key,
-                                         "fingerprint" => @api.fingerprint,
                                          "work_set" => work_set.to_json,
                                          "branch" => @branch,
                                          "gpu" => @options["gpu"])
@@ -277,7 +274,7 @@ def upload_frame(frame_file, work_set)
 end
 
 def download_sequence
-  response = @api.get("api/request_sequence_list?apikey=#{@api.key}&fingerprint=#{@api.fingerprint}&gpu=#{@options["gpu"]}")
+  response = @api.get("api/request_sequence_list?apikey=#{@api.key}&gpu=#{@options["gpu"]}")
   if response.code != "200"
     return response.body
   end
@@ -285,7 +282,7 @@ def download_sequence
   wanted = sequences.select{|s| !File.exist?("#{@movie_dir}/#{s}")}.first
   return "Nothing to download" if wanted.nil?
   LOGGER.info "Downloading #{wanted}..."
-  response = @api.get("api/request_sequence?apikey=#{@api.key}&fingerprint=#{@api.fingerprint}&seq=#{wanted}&gpu=#{@options["gpu"]}")
+  response = @api.get("api/request_sequence?apikey=#{@api.key}&fingerprint=#{@api.pow}&seq=#{wanted}&gpu=#{@options["gpu"]}")
   File.open("#{@movie_dir}/#{wanted}", "wb") {|f| f.write(response.body)}
   return "OK"
 end
@@ -294,7 +291,7 @@ end
 loop do
   sleep 1
   begin
-    response = @api.get("api/active_season?apikey=#{@api.key}&fingerprint=#{@api.fingerprint}&gpu=#{@options["gpu"]}")
+    response = @api.get("api/active_season?apikey=#{@api.key}&gpu=#{@options["gpu"]}")
     raise HTTPHalt, "Error in season: #{response.body}" if response.code != "200"
     @season = JSON.parse(response.body)
   rescue JSON::ParserError, Errno::ECONNREFUSED, Errno::ECONNRESET,
@@ -319,7 +316,7 @@ loop do
   FileUtils.mkdir_p(@movie_dir)
 
   begin
-    unless @options["no-download"]
+    unless @options["no-download"] || rand(1..10) != 1
       LOGGER.info "Requesting new sequence ..."
       LOGGER.info download_sequence
     end
