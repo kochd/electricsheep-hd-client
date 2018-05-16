@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+PROTOCOL_VERSION = "1.0"
 %w(fileutils tempfile pathname optparse uri net/http net/https
 net/http/post/multipart openssl zlib json logger digest/sha2).each{|g| require g}
 
@@ -7,6 +8,7 @@ Signal.trap("INT") { exit }
 BASEDIR = File.absolute_path(File.dirname(__FILE__))
 API_KEY_FILE = "#{BASEDIR}/api.key"
 LOGGER = Logger.new(STDOUT)
+USER_AGENT = "Electric Sheep HD Client/#{PROTOCOL_VERSION}"
 LOGGER.formatter = proc do |severity, datetime, progname, msg|
   "[#{datetime.strftime("%H:%M:%S")}] #{severity}: #{msg}\n"
 end
@@ -107,6 +109,7 @@ class API
   def get(url)
     uri = @uri + url
     request = Net::HTTP::Get.new(uri.request_uri)
+    request["user-agent"] = USER_AGENT
     response = @http.request(request)
     LOGGER.warn "Server response #{response.code}: #{response.body}" if response.code != '200'
     response
@@ -267,6 +270,7 @@ def upload_frame(frame_file, work_set)
                                          "work_set" => work_set.to_json,
                                          "branch" => @branch,
                                          "gpu" => @options["gpu"])
+    req["user-agent"] = USER_AGENT
     @api.http.verify_mode = OpenSSL::SSL::VERIFY_NONE if @options["insecure"]
     response = @api.http.request(req)
     raise HTTPHalt, "Error in upload: #{response.body}" if response.code != "200"
