@@ -8,7 +8,7 @@ This is the early alpha of a client for an electric sheep ecosystem which render
 For a good example of what electric sheeps are see [this youtube video](https://www.youtube.com/watch?v=KeNORUW4OGs)
 
 ## Road map
-- System is fully operational but in an alpha state. So expect [bugs](https://github.com/kochd/electricsheep-hd-client/issues).
+- System is fully operational but in an alpha state. So expect [bugs](https://github.com/kochd/electricsheep-hd-client/issues?utf8=%E2%9C%93&q=is%3Aissue+is%3Aopen+label%3Abug).
 - ~~Currently there is no front end where you can see the overall rendering process by the community.~~
 - ~~GPU rendering with CUDA is planned but this need more investigation~~ (Currently an experimental implementation exists)
 - Voting system for flames
