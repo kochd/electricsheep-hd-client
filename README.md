@@ -12,7 +12,7 @@ For a good example of what electric sheeps are see [this youtube video](https://
 - ~~Currently there is no front end where you can see the overall rendering process by the community.~~
 - ~~GPU rendering with CUDA is planned but this need more investigation~~ (Currently an experimental implementation exists)
 - Voting system for flames
-- Handle Replacement of bad flames when they are already rendered
+- Handle replacement of bad flames when they are already rendered
 - Submit system for new flames
 - Non linear mutation paths
 
