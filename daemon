@@ -248,7 +248,7 @@ def ember_render_frame(genome_file, begin_frame, end_frame)
           "--prefix=../frames/#{concat_name}/",
           "--supersample=2",
           "--begin=#{(begin_frame-1)}",
-          "--end=#{(end_frame-1)}",
+          "--end=#{(end_frame)}",
           "--isaac_seed=fractorium",
           "--enable_comments")
   result = $? # TODO Does it always return 0 ?
