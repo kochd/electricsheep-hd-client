@@ -178,21 +178,37 @@ end
 def request_work(keep_frames: false)
   response = @api.get("api/request_work?apikey=#{@api.key}&fingerprint=#{@api.pow}&gpu=#{@options["gpu"]}")
   work = JSON.parse(response.body)
-  work.each do |w|
-    genome_file = "#{@animated_genome_dir}/#{w['sequence']}.flame"
+  if @options["gpu"]
+    genome_file = "#{@animated_genome_dir}/#{work['sequence']}.flame"
     unless File.exist?(genome_file)
-      LOGGER.info "Downloading #{w['sequence']} ..."
-      download_animated_genome(w['sequence'])
+      LOGGER.info "Downloading #{work['sequence']} ..."
+      download_animated_genome(work['sequence'])
     end
-    LOGGER.info "Rendering... #{w['sequence']} Frame #{w['frame']}"
-    if @options["gpu"]
-      frame = ember_render_frame(genome_file, w["frame"])
-    else
+    LOGGER.info "Rendering... #{work['sequence']} Frame #{work['begin']}-#{work['end']}"
+    frames = ember_render_frame(genome_file, work['begin'], work['end'])
+    frames.sort.each_with_index do |frame, i|
+      frame_time = i + work['begin'].to_i
+      w = { "sequence": work['sequence'],
+            "frame": frame_time }
+      LOGGER.info "Uploading... #{work['sequence']} Frame #{frame_time}"
+      upload_frame(frame, w)
+
+      File.delete(frame) unless keep_frames
+    end
+  else
+    work.each do |w|
+      genome_file = "#{@animated_genome_dir}/#{w['sequence']}.flame"
+      unless File.exist?(genome_file)
+        LOGGER.info "Downloading #{w['sequence']} ..."
+        download_animated_genome(w['sequence'])
+      end
+      LOGGER.info "Rendering... #{w['sequence']} Frame #{w['frame']}"
       frame = flam3_render_frame(genome_file, w["frame"])
+      LOGGER.info "Uploading... #{w['sequence']} Frame #{w['frame']}"
+      upload_frame(frame, w)
+      File.delete(frame) unless keep_frames
     end
-    LOGGER.info "Uploading... #{w['sequence']} Frame #{w['frame']}"
-    upload_frame(frame, w)
-    File.delete(frame) unless keep_frames
+
   end
 end
 
@@ -210,7 +226,7 @@ def download_animated_genome(gid)
   output_file
 end
 
-def ember_render_frame(genome_file, frame)
+def ember_render_frame(genome_file, begin_frame, end_frame)
   genome = {}
   genome["file"] = Pathname.new(genome_file.to_s)
   genome["id"] = genome["file"].basename.sub(/\.flame$/,"")
@@ -231,12 +247,15 @@ def ember_render_frame(genome_file, frame)
           "#{@options['no-progress'] ? '' : '--progress'}",
           "--prefix=../frames/#{concat_name}/",
           "--supersample=2",
-          "--frame=#{(frame - 1).to_s}",
-          "--isaac_seed=fractorium")
+          "--begin=#{(begin_frame-1)}",
+          "--end=#{(end_frame-1)}",
+          "--isaac_seed=fractorium",
+          "--enable_comments")
   result = $? # TODO Does it always return 0 ?
   fail "Emberrender exited: #{result.exitstatus}" unless result.success?
-
-  "#{@frame_dir}/#{concat_name}/#{"%03d" % frame.to_s}.jpg"
+  # TODO is it always 04d ? George added 03d here
+  frames = ((begin_frame.to_i)..(end_frame.to_i)).map{ |i| "#{@frame_dir}/#{concat_name}/#{"%04d" % i.to_s}.jpg" }
+  frames
 end
 
 def flam3_render_frame(genome_file, frame)
@@ -299,7 +318,8 @@ loop do
     raise HTTPHalt, "Error in season: #{response.body}" if response.code != "200"
     @season = JSON.parse(response.body)
   rescue JSON::ParserError, Errno::ECONNREFUSED, Errno::ECONNRESET,
-         SocketError, Errno::ETIMEDOUT, HTTPHalt, Net::ReadTimeout,
+         SocketError, Errno::ETIMEDOUT, Errno::ENETUNREACH,
+         HTTPHalt, Net::ReadTimeout,
          Net::OpenTimeout => e
     LOGGER.error "#{e}"
     sleep 60
@@ -328,8 +348,8 @@ loop do
     request_work(keep_frames: @options["keep_frames"])
     break if ENV["OCRA"]
   rescue JSON::ParserError, Errno::ECONNREFUSED, Errno::ECONNRESET,
-         SocketError, Errno::ETIMEDOUT, HTTPHalt, Net::ReadTimeout,
-         Net::OpenTimeout => e
+         Errno::ENETUNREACH, SocketError, Errno::ETIMEDOUT, HTTPHalt,
+         Net::ReadTimeout, Net::OpenTimeout => e
     LOGGER.error "#{e}"
     sleep 60
     next
