@@ -11,7 +11,7 @@ For a good example of what electric sheeps are see [this youtube video](https://
 - System is fully operational but in an alpha state. So expect [bugs](https://github.com/kochd/electricsheep-hd-client/issues?utf8=%E2%9C%93&q=is%3Aissue+is%3Aopen+label%3Abug).
 - ~~Currently there is no front end where you can see the overall rendering process by the community.~~
 - ~~GPU rendering with CUDA is planned but this need more investigation~~ (Currently an experimental implementation exists)
-- Voting system for flames
+- ~~Voting system for flames~~
 - Handle replacement of bad flames when they are already rendered
 - Submit system for new flames
 - Non linear mutation paths
