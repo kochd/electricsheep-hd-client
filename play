@@ -39,9 +39,9 @@ mpv = Thread.new do
   begin
     Thread.current.abort_on_exception=true
     if Gem.win_platform?
-      @pid = Process.spawn("start /b /min mpv #{mpv_args.join(" ")}")
+      @pid = Process.spawn("mpv #{mpv_args.join(" ")}")
     else
-      @pid = Process.spawn("nice -19 mpv #{mpv_args.join(" ")}")
+      @pid = Process.spawn("mpv #{mpv_args.join(" ")}")
     end
     Process.wait(@pid)
   ensure
