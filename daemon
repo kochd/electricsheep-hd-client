@@ -23,7 +23,9 @@ OptionParser.new do |opts|
   opts.on("--np", "--no-progress", "Hide progress and ETA - This will speed up rendering a bit") {|v| @options["no-progress"] = true}
   opts.on("-k", "--keep-frames", "Do not delete rendered frames after upload") {|v| @options["keep_frames"] = true}
   opts.on("--nice NICENESS", "Niceness (Higher values result in lower process priority (default: 19, max: 19))") {|v| @options["nice"] = v}
-  opts.on("--experimental-gpu", "Use experimental GPU renderer (Fractorium)") {|v| @options["gpu"] = true}
+  opts.on("--gpu", "Use GPU renderer (Fractorium - http://fracotrium.com)") {|v| @options["gpu"] = true}
+  opts.on("--gpu-devices [Device-Ids]", "Use device(s) with given ids e.g.: '2,3'. Use --gpu-list-devices to get a list of your available devices.") {|v| @options["gpu-devices"] = v}
+  opts.on("--gpu-list-devices", "Returns a list of your installed OpenCL devices") {|v| @options["gpu-list-devices"] = true}
   if Gem.win_platform?
     opts.on("--gpu-priority", "Set GPU render priority (-2: lowest, 2: highest)") {|v| @options["priority"] = v}
   else
@@ -42,6 +44,11 @@ unless Gem.win_platform?
 else
   raise "emberanimate not found in #{ENV["APPDATA"]}\\Fractorium" if @options["gpu"] &&
                                                                     !File.exist?("#{ENV["APPDATA"]}\\Fractorium\\emberrender.exe")
+end
+
+if @options["gpu-list-devices"]
+  system "emberanimate --openclinfo"
+  exit 0
 end
 
 @options["server"] ||= "https://sheeps.triple6.org"
@@ -164,6 +171,7 @@ $DEBUG = @options["debug"]
 @options["gpu"] ||= false
 @options["insecure"] ||= false
 @options["keep_frames"] ||= false
+@options["gpu-devices"] ||= "0"
 Gem.win_platform? ? @options["priority"] ||= -2 : @options["priority"] ||= 1
 
 # Initialize API
@@ -246,6 +254,7 @@ def ember_render_frame(genome_file, begin_frame, end_frame)
           "--sp",
           "#{@options['no-progress'] ? '' : '--progress'}",
           "--prefix=../frames/#{concat_name}/",
+          "--device=#{@options["gpu-devices"]}",
           "--supersample=2",
           "--begin=#{(begin_frame-1)}",
           "--end=#{(end_frame)}",
