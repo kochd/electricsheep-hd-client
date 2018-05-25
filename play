@@ -4,7 +4,11 @@
 
 `which mpv` ; raise "Install mpv (https://mpv.io/) to use this script" if $? != 0
 require 'socket'
-PLAYLIST = "/tmp/eshd.m3u"
+if Gem.win_platform?
+  PLAYLIST = "eshd.m3u"
+else
+  PLAYLIST = "/tmp/eshd.m3u"
+end
 INPUTCONF = File.absolute_path(File.dirname(__FILE__)) + "/mpv-input.conf"
 
 ARGV[0] ||= File.dirname(__FILE__) + "/branches/" + File.read(File.dirname(__FILE__) + "/.active-season") + "/movies/"
