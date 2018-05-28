@@ -23,7 +23,7 @@ OptionParser.new do |opts|
   opts.on("--np", "--no-progress", "Hide progress and ETA - This will speed up rendering a bit") {|v| @options["no-progress"] = true}
   opts.on("-k", "--keep-frames", "Do not delete rendered frames after upload") {|v| @options["keep_frames"] = true}
   opts.on("--nice NICENESS", "Niceness (Higher values result in lower process priority (default: 19, max: 19))") {|v| @options["nice"] = v}
-  opts.on("--gpu", "Use GPU renderer (Fractorium - http://fracotrium.com)") {|v| @options["gpu"] = true}
+  opts.on("--gpu", "Use GPU renderer (Fractorium - http://fractorium.com/)") {|v| @options["gpu"] = true}
   opts.on("--gpu-devices [Device-Ids]", "Use device(s) with given ids e.g.: '2,3'. Use --gpu-list-devices to get a list of your available devices.") {|v| @options["gpu-devices"] = v}
   opts.on("--gpu-list-devices", "Returns a list of your installed OpenCL devices") {|v| @options["gpu-list-devices"] = true}
   if Gem.win_platform?
