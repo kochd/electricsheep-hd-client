@@ -113,13 +113,17 @@ class API
     end
   end
 
-  def get(url)
+  def get(url, &block)
     uri = @uri + url
     request = Net::HTTP::Get.new(uri.request_uri)
     request["user-agent"] = USER_AGENT
-    response = @http.request(request)
-    LOGGER.warn "Server response #{response.code}: #{response.body}" if response.code != '200'
-    response
+    if block_given?
+      @http.request(request) { |request| block.call(request) }
+    else
+      response = @http.request(request)
+      LOGGER.warn "Server response #{response.code}: #{response.body}" if response.code != '200'
+      response
+    end
   end
 
   def pow
@@ -196,8 +200,8 @@ def request_work(keep_frames: false)
     frames = ember_render_frame(genome_file, work['begin'], work['end'])
     frames.sort.each_with_index do |frame, i|
       frame_time = i + work['begin'].to_i
-      w = { "sequence": work['sequence'],
-            "frame": frame_time }
+      w = { "sequence" => work['sequence'],
+            "frame" => frame_time }
       LOGGER.info "Uploading... #{work['sequence']} Frame #{frame_time}"
       upload_frame(frame, w)
 
@@ -313,8 +317,14 @@ def download_sequence
   wanted = sequences.select{|s| !File.exist?("#{@movie_dir}/#{s}")}.first
   return "Nothing to download" if wanted.nil?
   LOGGER.info "Downloading #{wanted}..."
-  response = @api.get("api/request_sequence?apikey=#{@api.key}&fingerprint=#{@api.pow}&seq=#{wanted}&gpu=#{@options["gpu"]}")
-  File.open("#{@movie_dir}/#{wanted}", "wb") {|f| f.write(response.body)}
+  @api.get("api/request_sequence?apikey=#{@api.key}&fingerprint=#{@api.pow}&seq=#{wanted}&gpu=#{@options["gpu"]}") do |response|
+    File.open("#{@movie_dir}/incomplete_#{wanted}", "w") do |f|
+      response.read_body do |chunk|
+        f.write(chunk)
+      end
+    end
+    File.rename("#{@movie_dir}/incomplete_#{wanted}","#{@movie_dir}/#{wanted}")
+  end
   return "OK"
 end
 
