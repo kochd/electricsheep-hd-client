@@ -317,9 +317,9 @@ def download_sequence
   wanted = sequences.select{|s| !File.exist?("#{@movie_dir}/#{s}")}.first
   return "Nothing to download" if wanted.nil?
   LOGGER.info "Downloading #{wanted}..."
-  @api.get("api/request_sequence?apikey=#{@api.key}&fingerprint=#{@api.pow}&seq=#{wanted}&gpu=#{@options["gpu"]}") do |response|
-    File.open("#{@movie_dir}/incomplete_#{wanted}", "w") do |f|
-      response.read_body do |chunk|
+  @api.get("api/request_sequence?apikey=#{@api.key}&fingerprint=#{@api.pow}&seq=#{wanted}&gpu=#{@options["gpu"]}") do |r|
+    File.open("#{@movie_dir}/incomplete_#{wanted}", "wb") do |f|
+      r.read_body do |chunk|
         f.write(chunk)
       end
     end
