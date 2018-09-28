@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 PROTOCOL_VERSION = "1.0"
 %w(fileutils tempfile pathname optparse uri net/http net/https
-net/http/post/multipart openssl zlib json logger digest/sha2).each{|g| require g}
+net/http/post/multipart openssl zlib json logger digest/sha2 date).each{|g| require g}
 
 Signal.trap("INT") { exit }
 
@@ -328,6 +328,14 @@ def download_sequence
   return "OK"
 end
 
+def cleanup_animated_genomes
+  LOGGER.info "Cleaning up animated genomes..."
+  Dir.entries(@animated_genome_dir).select do |x|
+    x.end_with?(".flame") &&
+      File.ctime("#{@animated_genome_dir}/" + x) < (Date.today - 5).to_time
+  end.each { |x| File.delete("#{@animated_genome_dir}/" + x)}
+end
+
 # Loop
 loop do
   sleep 1
@@ -356,6 +364,7 @@ loop do
   FileUtils.mkdir_p(@animated_genome_dir)
   FileUtils.mkdir_p(@frame_dir)
   FileUtils.mkdir_p(@movie_dir)
+  cleanup_animated_genomes
 
   begin
     unless @options["no-download"] || rand(1..10) != 1
