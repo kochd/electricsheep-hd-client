@@ -376,7 +376,7 @@ loop do
     break if ENV["OCRA"]
   rescue JSON::ParserError, Errno::ECONNREFUSED, Errno::ECONNRESET,
          Errno::ENETUNREACH, SocketError, Errno::ETIMEDOUT, HTTPHalt,
-         Net::ReadTimeout, Net::OpenTimeout => e
+         Net::ReadTimeout, Net::OpenTimeout, Errno::ENOENT => e
     LOGGER.error "#{e}"
     sleep 60
     next
