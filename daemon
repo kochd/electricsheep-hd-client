@@ -310,12 +310,16 @@ end
 
 def download_sequence
   response = @api.get("api/request_sequence_list?apikey=#{@api.key}&gpu=#{@options["gpu"]}")
-  if response.code != "200"
-    return response.body
+  if response.code == "950"
+    # Server says Render more frames
+    render_more = response.body.gsub(/[^0-9]/, '').to_i
+    return { code: response.code.to_i, body: response.body, render_more: render_more }
+  elsif response.code != "200"
+    return { code: response.code.to_i, body: response.body }
   end
   sequences = JSON.parse(response.body)
   wanted = sequences.select{|s| !File.exist?("#{@movie_dir}/#{s}")}.first
-  return "Nothing to download" if wanted.nil?
+  return { code: 951, body: "Nothing more to download" } if wanted.nil?
   LOGGER.info "Downloading #{wanted}..."
   @api.get("api/request_sequence?apikey=#{@api.key}&fingerprint=#{@api.pow}&seq=#{wanted}&gpu=#{@options["gpu"]}") do |r|
     File.open("#{@movie_dir}/incomplete_#{wanted}", "wb") do |f|
@@ -325,7 +329,7 @@ def download_sequence
     end
     File.rename("#{@movie_dir}/incomplete_#{wanted}","#{@movie_dir}/#{wanted}")
   end
-  return "OK"
+  { code: response.code.to_i, body: 'Ok' }
 end
 
 def cleanup_animated_genomes
@@ -335,6 +339,12 @@ def cleanup_animated_genomes
       File.ctime("#{@animated_genome_dir}/" + x) < (Date.today - 5).to_time
   end.each { |x| File.delete("#{@animated_genome_dir}/" + x)}
 end
+
+# Vars to determine if download should proceed
+render_more = 0
+last_check_time = (Date.new - 60*60)
+nothing_to_download = false
+
 
 # Loop
 loop do
@@ -366,13 +376,24 @@ loop do
   FileUtils.mkdir_p(@movie_dir)
   cleanup_animated_genomes
 
+
   begin
-    unless @options["no-download"] || rand(1..10) != 1
-      LOGGER.info "Requesting new sequence ..."
-      LOGGER.info download_sequence
+    unless @options["no-download"]
+      # Wants to download
+      if  (render_more <= 0 && !nothing_to_download) || last_check_time < (Date.new - 60*60)
+        LOGGER.info "Requesting new sequence ..."
+        last_check_time = Date.new
+        download_sequence_state = download_sequence
+        if download_sequence_state.key?'render_more'
+          render_more = download_sequence_state[:render_more]
+        end
+        nothing_to_download = download_sequence_state[:code] == 951
+        LOGGER.info download_sequence_state[:body]
+      end
     end
     LOGGER.info "Requesting new work..."
     request_work(keep_frames: @options["keep_frames"])
+    render_more = render_more - 1
     break if ENV["OCRA"]
   rescue JSON::ParserError, Errno::ECONNREFUSED, Errno::ECONNRESET,
          Errno::ENETUNREACH, SocketError, Errno::ETIMEDOUT, HTTPHalt,
