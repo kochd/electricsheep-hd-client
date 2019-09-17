@@ -8,7 +8,6 @@ This is the early alpha of a client for an electric sheep ecosystem which render
 For a good example of what electric sheeps are see [this youtube video](https://www.youtube.com/watch?v=KeNORUW4OGs)
 
 ## Road map
-- System is fully operational but in an alpha state. So expect [bugs](https://github.com/kochd/electricsheep-hd-client/issues?utf8=%E2%9C%93&q=is%3Aissue+is%3Aopen+label%3Abug).
 - ~~Currently there is no front end where you can see the overall rendering process by the community.~~
 - ~~GPU rendering with CUDA is planned but this need more investigation~~ (Currently an experimental implementation exists)
 - ~~Voting system for flames~~
@@ -16,8 +15,6 @@ For a good example of what electric sheeps are see [this youtube video](https://
 - ~~Submit system for new flames~~
 - Non linear mutation paths
 
-## IRC
-Join us on [#electricsheephd @ freenode.net](http://webchat.freenode.net/?randomnick=1&channels=%23electricsheephd&prompt=0&uio=d4)
 ## Getting started
 ### Debian / Ubuntu / ...
 <pre>
@@ -46,11 +43,19 @@ The certificated is self-signed. You should be fine ignoring the warning and pro
 <pre>
 Usage: daemon [OPTIONS]
         --server SERVER              Control server to connect to
-        --apikey APIKEY              Your api key
-        --debug                      Debug-mode
-        --no-download                Do not download movies
+        --apikey APIKEY              Your api key - Default: read from ./api.key file
+        --nd, --no-download          Do not download movies
+        --np, --no-progress          Hide progress and ETA - This will speed up rendering a bit
+    -k, --keep-frames                Do not delete rendered frames after upload
         --nice NICENESS              Niceness (Higher values result in lower process priority (default: 19, max: 19))
+        --gpu                        Use GPU renderer (Fractorium - http://fractorium.com/)
+        --gpu-devices [Device-Ids]   Use device(s) with given ids e.g.: '2,3'. Use --gpu-list-devices to get a list of your available devices.
+        --gpu-list-devices           Returns a list of your installed OpenCL devices
+        --gpu-priority               Set GPU render priority (1: lowest, 99: highest)
+        --insecure                   Ignore ssl certificate errors
+        --debug                      Debug-mode
 </pre>
+(This list might be outdated. See the 'real' --help of the daemon)
 
 Once your daemon is rendering frames you will gain so called credits for every frame you have rendered. Your daemon will then start to "buy" completed sequences using your gained credits and download them to `$BASE_DIR/branches/$CURRENT_BRANCH/movies`. Currently you will only get short sequences of 5 seconds which can be played by the play script.
 
@@ -60,7 +65,13 @@ Just run
 ./play
 </pre>
 
-This should read your earned movies of the current season and then play them using mpv (https://mpv.io). mpv is also available as apt package.
+This should read your earned movies of the current season and then play them using mpv (https://mpv.io). mpv is also available as apt package and included in the windows installer.
 
 ## Setups
-Take a look at the README's in [setups](https://github.com/kochd/electricsheep-hd-client/tree/master/setups)
+Take a look at the README's in [setups](https://github.com/kochd/electricsheep-hd-client/tree/master/setups) for advanced setups
+
+## Questions?
+- [FAQ](https://sheeps.triple6.org/faq)
+- [Wiki](https://github.com/kochd/electricsheep-hd-client/wiki/Season)
+- [IRC Chat](https://kiwiirc.com/nextclient/irc.freenode.net/?nick=guest&theme=nightwatch#electricsheephd)
+- [Feel free to submit any question](https://github.com/kochd/electricsheep-hd-client/issues/new?labels=question)
