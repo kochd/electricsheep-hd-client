@@ -1,4 +1,4 @@
 title Electric Sheep HD daemon
-cd %~p0
-set PATH=%SYSTEMROOT%\system32;%cd%\contrib\bin
+CD /D %~dp0
+SET PATH=%SYSTEMROOT%\system32;%CD%\contrib\bin
 ruby daemon %* || pause
