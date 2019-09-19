@@ -20,6 +20,7 @@ OptionParser.new do |opts|
   opts.on("--server SERVER", "Control server to connect to") {|v| @options["server"] = v.to_s}
   opts.on("--apikey APIKEY", "Your api key - Default: read from ./api.key file") {|v| @options["apikey"] = v}
   opts.on("--nd", "--no-download", "Do not download movies") {|v| @options["no-download"] = true}
+  opts.on("--nr", "--no-render", "Do not render any frames") {|v| @options["no-render"] = true}
   opts.on("--np", "--no-progress", "Hide progress and ETA - This will speed up rendering a bit") {|v| @options["no-progress"] = true}
   opts.on("-k", "--keep-frames", "Do not delete rendered frames after upload") {|v| @options["keep_frames"] = true}
   opts.on("--nice NICENESS", "Niceness (Higher values result in lower process priority (default: 19, max: 19))") {|v| @options["nice"] = v}
@@ -316,6 +317,7 @@ def download_sequence
   sequences = JSON.parse(response.body)
   wanted = sequences.select{|s| !File.exist?("#{@movie_dir}/#{s}")}.first
   return "Nothing to download" if wanted.nil?
+
   LOGGER.info "Downloading #{wanted}..."
   @api.get("api/request_sequence?apikey=#{@api.key}&fingerprint=#{@api.pow}&seq=#{wanted}&gpu=#{@options["gpu"]}") do |r|
     File.open("#{@movie_dir}/incomplete_#{wanted}", "wb") do |f|
@@ -367,12 +369,19 @@ loop do
   cleanup_animated_genomes
 
   begin
-    unless @options["no-download"] || rand(1..10) != 1
+    if @options["no-render"] || (!@options["no-download"] && rand(1..10) == 1)
       LOGGER.info "Requesting new sequence ..."
-      LOGGER.info download_sequence
+      dl = download_sequence
+      if dl == "Nothing to download" && @options["no-render"]
+        LOGGER.info "Waiting for new sequences"
+        sleep 3600
+      end
+      LOGGER.info dl
     end
-    LOGGER.info "Requesting new work..."
-    request_work(keep_frames: @options["keep_frames"])
+    unless @options["no-render"]
+      LOGGER.info "Requesting new work..."
+      request_work(keep_frames: @options["keep_frames"])
+    end
     break if ENV["OCRA"]
   rescue JSON::ParserError, Errno::ECONNREFUSED, Errno::ECONNRESET,
          Errno::ENETUNREACH, SocketError, Errno::ETIMEDOUT, HTTPHalt,
