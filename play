@@ -13,6 +13,7 @@ INPUTCONF = File.absolute_path(File.dirname(__FILE__)) + "/mpv-input.conf"
 OptionParser.new do |opts|
   opts.banner = "Usage: #{File.basename(__FILE__)} [OPTIONS]"
   opts.on("--only-m3u", TrueClass, "Create the m3u and exit")
+  opts.on("--stop-screensaver", TrueClass, "Prevent the screensaver from starting while play is running")
   opts.on("-d DIRECTORY", "--directory DIRECTORY" , String, "Path to dir to play")
 end.parse!(into: @options)
 
@@ -43,7 +44,7 @@ if @parts.count < 1
 end
 File.open(PLAYLIST, "w") { |f| f.write @parts.rotate(OFFSET).join("\n") }
 
-mpv_args = %W(--input-conf="#{INPUTCONF}" --loop-playlist=inf --no-input-default-bindings --no-stop-screensaver --no-osc -fs --panscan=1 --idle --quiet #{PLAYLIST})
+mpv_args = %W(--input-conf="#{INPUTCONF}" --loop-playlist=inf --no-input-default-bindings #{(@options[:"stop-screensaver"] ? "--stop-screensaver" : "--no-stop-screensaver")} --no-osc -fs --panscan=1 --idle --quiet #{PLAYLIST})
 mpv_args << "--wid #{ENV['XSCREENSAVER_WINDOW']}" if ENV['XSCREENSAVER_WINDOW']
 
 mpv = Thread.new do
