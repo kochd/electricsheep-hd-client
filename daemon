@@ -48,7 +48,13 @@ else
 end
 
 if @options["gpu-list-devices"]
-  system "emberanimate --openclinfo"
+  if Gem.win_platform?
+    emberanimate = "#{ENV["APPDATA"]}/Fractorium/emberanimate"
+  else
+    emberanimate = "emberanimate"
+  end
+  system(emberanimate,
+			"--openclinfo")
   exit 0
 end
 
