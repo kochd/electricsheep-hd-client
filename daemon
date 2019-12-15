@@ -378,10 +378,11 @@ loop do
   FileUtils.mkdir_p(@frame_dir)
   FileUtils.mkdir_p(@movie_dir)
   cleanup_animated_genomes
-  @p2p.announce(@movie_dir)
-  @p2p.update_dht
 
   begin
+    @p2p.announce(@movie_dir)
+    @p2p.update_dht
+
     if @options["no-render"] || (!@options["no-download"] && rand(1..10) == 1)
       LOGGER.info "Requesting new sequence ..."
       dl = download_sequence
