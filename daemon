@@ -3,6 +3,8 @@ PROTOCOL_VERSION = "1.0"
 %w(fileutils tempfile pathname optparse uri net/http net/https
 net/http/post/multipart openssl zlib json logger digest/sha2 date).each{|g| require g}
 
+require_relative 'lib/p2p'
+
 Signal.trap("INT") { exit }
 
 BASEDIR = File.absolute_path(File.dirname(__FILE__))
@@ -344,6 +346,21 @@ def cleanup_animated_genomes
   end.each { |x| File.delete("#{@animated_genome_dir}/" + x)}
 end
 
+def p2p_announce
+  return if $P2P_ANNOUNCED
+  LOGGER.info "Hashing files for p2p announce"
+  files = []
+  Dir.entries("#{@branch_dir}/movies").select{ |x| x.end_with?(".webm") }.each do |webm|
+    files << { name: webm,
+               hash: Digest::SHA2.hexdigest(File.read("#{@branch_dir}/movies/" + webm))
+    }
+  end
+  files.each do |f|
+    @api.get("api/p2p/announce?apikey=#{@api.key}&gpu=#{@options["gpu"]}&file=#{f.to_json}")
+  end
+  $P2P_ANNOUNCED = true
+end
+
 # Loop
 loop do
   sleep 1
@@ -373,6 +390,7 @@ loop do
   FileUtils.mkdir_p(@frame_dir)
   FileUtils.mkdir_p(@movie_dir)
   cleanup_animated_genomes
+  p2p_announce
 
   begin
     if @options["no-render"] || (!@options["no-download"] && rand(1..10) == 1)
