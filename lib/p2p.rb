@@ -17,7 +17,7 @@ class P2P
                hash: Digest::SHA2.hexdigest(File.read("#{movie_dir}/" + webm))
     }
     end
-    files.each_slice(25).to_a.each do |a|
+    files.shuffle.each_slice(25).to_a.each do |a|
       @api.get("api/p2p/announce?apikey=#{@api.key}&gpu=#{OPTIONS["gpu"]}&files=#{a.to_json}")
     end
     @@P2P_ANNOUNCED = true
