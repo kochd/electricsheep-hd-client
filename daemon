@@ -123,7 +123,7 @@ class API
   end
 
   def get(url, &block)
-    uri = @uri + url
+    uri = @uri + URI.escape(url)
     request = Net::HTTP::Get.new(uri.request_uri)
     request["user-agent"] = USER_AGENT
     if block_given?
