@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-PROTOCOL_VERSION = "1.0"
+PROTOCOL_VERSION = "1.1"
 %w(fileutils tempfile pathname optparse uri net/http net/https timeout
 net/http/post/multipart openssl zlib json logger digest/sha2 date).each{|g| require g}
 
@@ -275,7 +275,7 @@ def ember_render_frame(genome_file, begin_frame, end_frame)
   result = $? # TODO Does it always return 0 ?
   fail "Emberrender exited: #{result.exitstatus}" unless result.success?
   # TODO is it always 04d ? George added 03d here
-  frames = ((begin_frame.to_i)..(end_frame.to_i)).map{ |i| "#{@frame_dir}/#{concat_name}/#{"%04d" % i.to_s}.jpg" }
+  frames = ((begin_frame.to_i-1)..(end_frame.to_i-1)).map{ |i| "#{@frame_dir}/#{concat_name}/#{"%04d" % i.to_s}.jpg" }
   frames
 end
 
