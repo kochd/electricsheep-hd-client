@@ -46,7 +46,7 @@ File.open(PLAYLIST, "w") { |f| f.write @parts.rotate(OFFSET).join("\n") }
 exit if @options[:"only-m3u"]
 
 mpv_args = %W(--input-conf="#{INPUTCONF}" --loop-playlist=inf --no-input-default-bindings #{(@options[:"stop-screensaver"] ? "--stop-screensaver" : "--no-stop-screensaver")} --no-osc -fs --panscan=1 --idle --quiet #{PLAYLIST})
-mpv_args << "--wid #{ENV['XSCREENSAVER_WINDOW']}" if ENV['XSCREENSAVER_WINDOW']
+mpv_args << "--wid=#{ENV['XSCREENSAVER_WINDOW']}" if ENV['XSCREENSAVER_WINDOW']
 
 mpv = Thread.new do
   begin
