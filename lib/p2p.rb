@@ -10,7 +10,7 @@ class P2P
   def announce(movie_dir)
     LOGGER.info "Hashing files for p2p announce"
     files = []
-    Dir.entries(movie_dir).select{ |x| x.end_with?(".webm") }.shuffle.first(10).each do |webm|
+    Dir.entries(movie_dir).select{ |x| x.end_with?(".webm") && x.start_with?("electricsheep.") }.shuffle.first(10).each do |webm|
     files << { name: webm,
                hash: Digest::SHA2.hexdigest(File.read("#{movie_dir}/" + webm))
     }
