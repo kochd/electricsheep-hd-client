@@ -15,7 +15,7 @@ class P2P
                hash: Digest::SHA2.hexdigest(File.read("#{movie_dir}/" + webm))
     }
     end
-    @api.get("api/p2p/announce?apikey=#{@api.key}&gpu=#{OPTIONS["gpu"]}&files=#{a.to_json}")
+    @api.get("api/p2p/announce?apikey=#{@api.key}&gpu=#{OPTIONS["gpu"]}&files=#{files.to_json}")
   end
 
   def update_dht
