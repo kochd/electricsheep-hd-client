@@ -2,14 +2,12 @@ require 'socket'
 
 class P2P
   attr_reader :dht
-  @@P2P_ANNOUNCED = false
   def initialize(api)
     @api = api
     @dht = []
   end
 
   def announce(movie_dir)
-    return if @@P2P_ANNOUNCED
     LOGGER.info "Hashing files for p2p announce"
     files = []
     Dir.entries(movie_dir).select{ |x| x.end_with?(".webm") }.shuffle.first(10).each do |webm|
@@ -17,10 +15,7 @@ class P2P
                hash: Digest::SHA2.hexdigest(File.read("#{movie_dir}/" + webm))
     }
     end
-    files.each do |a|
-      @api.get("api/p2p/announce?apikey=#{@api.key}&gpu=#{OPTIONS["gpu"]}&files=#{a.to_json}")
-    end
-    @@P2P_ANNOUNCED = true
+    @api.get("api/p2p/announce?apikey=#{@api.key}&gpu=#{OPTIONS["gpu"]}&files=#{a.to_json}")
   end
 
   def update_dht
