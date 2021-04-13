@@ -12,12 +12,12 @@ class P2P
     return if @@P2P_ANNOUNCED
     LOGGER.info "Hashing files for p2p announce"
     files = []
-    Dir.entries(movie_dir).select{ |x| x.end_with?(".webm") }.each do |webm|
+    Dir.entries(movie_dir).select{ |x| x.end_with?(".webm") }.shuffle.first(10).each do |webm|
     files << { name: webm,
                hash: Digest::SHA2.hexdigest(File.read("#{movie_dir}/" + webm))
     }
     end
-    files.shuffle.each_slice(25).to_a.each do |a|
+    files.each do |a|
       @api.get("api/p2p/announce?apikey=#{@api.key}&gpu=#{OPTIONS["gpu"]}&files=#{a.to_json}")
     end
     @@P2P_ANNOUNCED = true

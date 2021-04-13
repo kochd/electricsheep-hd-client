@@ -380,8 +380,10 @@ loop do
   cleanup_animated_genomes
 
   begin
-    begin ;Timeout.timeout(30) { @p2p.announce(@movie_dir) } ;rescue Timeout::Error => e ;end
-    @p2p.update_dht
+    if rand(1..10) == 1
+      @p2p.announce(@movie_dir)
+      @p2p.update_dht
+    end
 
     if @options["no-render"] || (!@options["no-download"] && rand(1..10) == 1)
       LOGGER.info "Requesting new sequence ..."
