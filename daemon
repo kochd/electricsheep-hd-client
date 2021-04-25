@@ -176,6 +176,7 @@ class API
 end
 
 # Default options:
+@options["apikey"] ||= ENV["electricsheep-hd-client-apikey"]
 @options["apikey"] ||= File.read(API_KEY_FILE).strip if File.exist?(API_KEY_FILE)
 @options["debug"] ||= false
 @options["no-download"] ||= false
