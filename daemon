@@ -213,9 +213,11 @@ def request_work(keep_frames: false)
       w = { "sequence" => work['sequence'],
             "frame" => frame_time }
       LOGGER.info "Uploading... #{work['sequence']} Frame #{frame_time}"
-      upload_frame(frame, w)
-
-      File.delete(frame) unless keep_frames
+      begin
+        upload_frame(frame, w)
+      ensure
+        File.delete(frame) unless keep_frames
+      end
     end
   else
     work.each do |w|
