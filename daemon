@@ -216,7 +216,7 @@ def request_work(keep_frames: false)
       begin
         upload_frame(frame, w)
       ensure
-        File.delete(frame) unless keep_frames
+        File.delete(frame) unless keep_frames || !File.exist?(frame)
       end
     end
   else
@@ -229,10 +229,12 @@ def request_work(keep_frames: false)
       LOGGER.info "Rendering... #{w['sequence']} Frame #{w['frame']}"
       frame = flam3_render_frame(genome_file, w["frame"])
       LOGGER.info "Uploading... #{w['sequence']} Frame #{w['frame']}"
-      upload_frame(frame, w)
-      File.delete(frame) unless keep_frames
+      begin
+        upload_frame(frame, w)
+      ensure
+        File.delete(frame) unless keep_frames || !File.exist?(frame)
+      end
     end
-
   end
 end
 
